@@ -1,4 +1,4 @@
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, adminStorage } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { PaginationParams, PaginatedResult } from "@/types";
 import { readLocalCollection, setLocalDoc, getLocalDoc } from "@/lib/tenant-store";
@@ -11,6 +11,15 @@ export interface IProductVariant {
   price: number;
   costPrice?: number;
   stock: number;
+}
+
+export interface ProductImageMetadata {
+  url: string;
+  path: string;
+  width: number;
+  height: number;
+  format: string;
+  version: number;
 }
 
 export interface IProduct {
@@ -26,6 +35,8 @@ export interface IProduct {
   brandId?: string;
   brandName?: string;
   images: string[];
+  image?: ProductImageMetadata;
+  thumbnail?: ProductImageMetadata;
   costPrice: number;
   sellingPrice: number;
   taxRate: number;
@@ -59,7 +70,9 @@ export class ProductRepository {
       categoryName: data.categoryName ?? "",
       brandId: data.brandId ?? "",
       brandName: data.brandName ?? "",
-      images: data.images ?? (data.image ? [data.image] : []),
+      images: data.images ?? (data.image?.url ? [data.image.url] : typeof data.image === "string" ? [data.image] : []),
+      image: data.image && typeof data.image === "object" ? data.image : undefined,
+      thumbnail: data.thumbnail && typeof data.thumbnail === "object" ? data.thumbnail : undefined,
       costPrice: Number(data.costPrice ?? 0),
       sellingPrice: Number(data.sellingPrice ?? data.price ?? 0),
       taxRate: Number(data.taxRate ?? 0),
@@ -164,6 +177,28 @@ export class ProductRepository {
     );
 
     return partial ?? null;
+  }
+
+  async findBySku(sku: string, tenantId = "default"): Promise<IProduct | null> {
+    const cleanSku = (sku || "").trim();
+    if (!cleanSku) return null;
+
+    try {
+      const snap = await this.getCollection(tenantId)
+        .where("sku", "==", cleanSku)
+        .where("isActive", "==", true)
+        .limit(1)
+        .get();
+
+      if (!snap.empty) {
+        return this.mapDoc(snap.docs[0]);
+      }
+    } catch (dbErr) {
+      console.warn("[ProductRepo] Firestore findBySku deferred:", dbErr);
+    }
+
+    const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive !== false);
+    return localProducts.find((p) => p.sku && p.sku.toLowerCase() === cleanSku.toLowerCase()) ?? null;
   }
 
   async search(query: string, limit = 20, tenantId = "default"): Promise<IProduct[]> {
@@ -281,6 +316,20 @@ export class ProductRepository {
   }
 
   async create(data: Partial<IProduct>, tenantId = "default"): Promise<IProduct> {
+    if (data.sku) {
+      const existingSku = await this.findBySku(data.sku, tenantId);
+      if (existingSku) {
+        throw new Error(`Product with SKU "${data.sku}" already exists`);
+      }
+    }
+
+    if (data.barcode) {
+      const existingBarcode = await this.findByBarcode(data.barcode, tenantId);
+      if (existingBarcode && existingBarcode.barcode === data.barcode) {
+        throw new Error(`Product with Barcode "${data.barcode}" already exists`);
+      }
+    }
+
     const col = this.getCollection(tenantId);
     const docRef = col.doc();
     const id = docRef.id;
@@ -326,6 +375,36 @@ export class ProductRepository {
   async update(id: string, data: Partial<IProduct>, tenantId = "default"): Promise<IProduct | null> {
     const existing = await this.findById(id, tenantId);
     if (!existing) return null;
+
+    if (data.sku && data.sku !== existing.sku) {
+      const existingSku = await this.findBySku(data.sku, tenantId);
+      if (existingSku && existingSku._id !== id) {
+        throw new Error(`Product with SKU "${data.sku}" already exists`);
+      }
+    }
+
+    if (data.barcode && data.barcode !== existing.barcode) {
+      const existingBarcode = await this.findByBarcode(data.barcode, tenantId);
+      if (existingBarcode && existingBarcode._id !== id && existingBarcode.barcode === data.barcode) {
+        throw new Error(`Product with Barcode "${data.barcode}" already exists`);
+      }
+    }
+
+    // Clean up obsolete image objects if replaced with a new versioned image
+    if (data.image?.path && existing.image?.path && data.image.path !== existing.image.path) {
+      try {
+        await adminStorage.file(existing.image.path).delete();
+      } catch {
+        // ignore missing object errors
+      }
+      if (existing.thumbnail?.path && data.thumbnail?.path !== existing.thumbnail.path) {
+        try {
+          await adminStorage.file(existing.thumbnail.path).delete();
+        } catch {
+          // ignore missing object errors
+        }
+      }
+    }
 
     const updated: IProduct = {
       ...existing,

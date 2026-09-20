@@ -1,14 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSession } from "@/components/providers/session-provider";
+import { Store, Menu, X } from "lucide-react";
+import { RoleCtaButton } from "@/components/public/role-cta-button";
 
 export function PublicHeader() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 lg:px-8">
@@ -24,7 +24,7 @@ export function PublicHeader() {
           </div>
         </Link>
 
-        {/* Center Nav Links */}
+        {/* Desktop Center Nav Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-zinc-300">
           <Link
             href="/"
@@ -52,25 +52,63 @@ export function PublicHeader() {
           </Link>
         </nav>
 
-        {/* Right CTA / Auth Button */}
-        <div className="flex items-center gap-3">
-          {session?.user ? (
-            <Button asChild size="sm" variant="brandGradient">
-              <Link href={session.user.role === "cashier" ? "/pos" : "/dashboard"}>
-                <User className="mr-1.5 h-4 w-4" />
-                {session.user.role === "cashier" ? "Open POS Workspace" : "Admin Dashboard"}
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild size="sm" variant="brandGradient">
-              <Link href="/login">
-                <User className="mr-1.5 h-4 w-4" />
-                Staff Sign In
-              </Link>
-            </Button>
-          )}
+        {/* Desktop Right Role-Aware CTA */}
+        <div className="hidden md:flex items-center gap-3">
+          <RoleCtaButton variant="brandGradient" size="sm" />
+        </div>
+
+        {/* Mobile Menu Toggle Button */}
+        <div className="flex md:hidden items-center gap-2">
+          <RoleCtaButton variant="brandGradient" size="sm" />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-zinc-400 hover:text-white focus:outline-none"
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6 text-[#E85002]" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-zinc-800 bg-zinc-950 p-4 space-y-3">
+          <nav className="flex flex-col space-y-2 text-sm font-medium text-zinc-300">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/" ? "bg-[#E85002]/10 text-[#E85002] font-bold" : "hover:bg-zinc-900"}`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/products"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname.startsWith("/products") ? "bg-[#E85002]/10 text-[#E85002] font-bold" : "hover:bg-zinc-900"}`}
+            >
+              Products
+            </Link>
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/about" ? "bg-[#E85002]/10 text-[#E85002] font-bold" : "hover:bg-zinc-900"}`}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/contact" ? "bg-[#E85002]/10 text-[#E85002] font-bold" : "hover:bg-zinc-900"}`}
+            >
+              Contact
+            </Link>
+          </nav>
+
+          <div className="pt-2 border-t border-zinc-900">
+            <RoleCtaButton variant="brandGradient" size="sm" fullWidth />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

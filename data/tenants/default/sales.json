@@ -1,5 +1,73 @@
 [
   {
+    "id": "SALE-E2E-2-1789909320532",
+    "invoiceNumber": "INV-260920-8385",
+    "items": [
+      {
+        "productId": "xWnBINC7rPKZG46l7ixT",
+        "name": "TEST E2E RETAIL PRODUCT",
+        "sku": "SKU-POS-7863",
+        "quantity": 2,
+        "price": 100,
+        "discount": 0,
+        "tax": 0,
+        "subtotal": 200,
+        "barcode": "8901234317863"
+      }
+    ],
+    "subtotal": 200,
+    "discount": 0,
+    "tax": 0,
+    "total": 200,
+    "payments": [
+      {
+        "method": "upi",
+        "amount": 200,
+        "reference": "UTR12345678"
+      }
+    ],
+    "cashierId": "emp-cashier-001",
+    "status": "completed",
+    "isOffline": false,
+    "createdAt": "2026-09-20T13:02:00.783Z",
+    "updatedAt": "2026-09-20T13:02:00.784Z",
+    "_id": "SALE-E2E-2-1789909320532"
+  },
+  {
+    "id": "SALE-E2E-1-1789909319762",
+    "invoiceNumber": "INV-260920-8894",
+    "items": [
+      {
+        "productId": "xWnBINC7rPKZG46l7ixT",
+        "name": "TEST E2E RETAIL PRODUCT",
+        "sku": "SKU-POS-7863",
+        "quantity": 1,
+        "price": 100,
+        "discount": 0,
+        "tax": 0,
+        "subtotal": 100,
+        "barcode": "8901234317863"
+      }
+    ],
+    "subtotal": 100,
+    "discount": 0,
+    "tax": 0,
+    "total": 100,
+    "payments": [
+      {
+        "method": "cash",
+        "amount": 100,
+        "reference": "Cash Tendered: 100"
+      }
+    ],
+    "cashierId": "emp-cashier-001",
+    "status": "completed",
+    "isOffline": false,
+    "createdAt": "2026-09-20T13:01:59.893Z",
+    "updatedAt": "2026-09-20T13:01:59.894Z",
+    "_id": "SALE-E2E-1-1789909319762"
+  },
+  {
     "id": "test_upi_tx_1789739646260",
     "invoiceNumber": "INV-260918-8890",
     "items": [

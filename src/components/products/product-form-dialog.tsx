@@ -141,6 +141,9 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
     }
   }, [open, reset, initialData]);
 
+  const [imageMeta, setImageMeta] = useState<{ url: string; path: string; width: number; height: number; format: string; version: number } | null>(null);
+  const [thumbMeta, setThumbMeta] = useState<{ url: string; path: string; width: number; height: number; format: string; version: number } | null>(null);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,13 +151,20 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
+    if (initialData?._id) {
+      formData.append("productId", initialData._id);
+    }
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Upload failed");
-      setImageUrl(json.data.url);
-      toast.success("Image uploaded successfully");
+      
+      const data = json.data;
+      setImageUrl(data.url || data.image?.url);
+      if (data.image) setImageMeta(data.image);
+      if (data.thumbnail) setThumbMeta(data.thumbnail);
+      toast.success("Image optimized (WebP) & uploaded successfully");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -178,6 +188,8 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
     const payload = {
       ...data,
       images: imageUrl ? [imageUrl] : [],
+      image: imageMeta || undefined,
+      thumbnail: thumbMeta || undefined,
     };
 
     const url = isEditing ? `/api/products/${initialData!._id}` : "/api/products";

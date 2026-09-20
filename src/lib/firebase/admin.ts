@@ -16,7 +16,9 @@ if (!getApps().length) {
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: privateKey,
     }),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    storageBucket:
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+      `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`,
   });
 } else {
   app = getApp();
@@ -29,5 +31,8 @@ try {
   // settings() can only be called once before any operations; safe to ignore on HMR re-evaluations
 }
 export const adminAuth = getAuth(app);
-export const adminStorage = getStorage(app).bucket();
+const defaultBucketName =
+  process.env.FIREBASE_STORAGE_BUCKET ||
+  `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`;
+export const adminStorage = getStorage(app).bucket(defaultBucketName);
 export default app;

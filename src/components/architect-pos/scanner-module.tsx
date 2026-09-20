@@ -15,6 +15,14 @@ export function ScannerModule() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleBarcodeScanned = (barcode: string) => {
+    setIsScanning(true);
+    toast.success(`Scanned Barcode: ${barcode}`);
+    setTimeout(() => {
+      router.push(`/pos?barcode=${encodeURIComponent(barcode)}`);
+    }, 400);
+  };
+
   // Hardware Scanner Keydown Listener
   useEffect(() => {
     let buffer = "";
@@ -46,14 +54,6 @@ export function ScannerModule() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  const handleBarcodeScanned = (barcode: string) => {
-    setIsScanning(true);
-    toast.success(`Scanned Barcode: ${barcode}`);
-    setTimeout(() => {
-      router.push(`/pos?barcode=${encodeURIComponent(barcode)}`);
-    }, 400);
-  };
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,184 +1,134 @@
-# RetailPOS — Full-Stack Point of Sale System
+# RetailPOS — Full-Stack Multi-Tenant Point of Sale & Retail Platform (2026)
 
-Modern POS and inventory management built with **Next.js 16 (App Router)**, **TypeScript**, **MongoDB/Mongoose**, **Tailwind CSS**, **NextAuth**, **Zustand**, **React Hook Form + Zod**, **Recharts**, and **TanStack Table**.
+Modern, enterprise-grade multi-tenant Point of Sale and Inventory Management System built with **Next.js 16 (App Router, Turbopack)**, **TypeScript**, **Cloud Firestore & Firebase Admin SDK**, **Firebase Auth**, **Sharp (Server-Side WebP Processing)**, **@zxing/browser (Multi-Format Barcode Engine)**, **Boneyard.js (Layout-Stable Skeletons)**, **Tailwind CSS 4**, and **Zustand**.
 
-## Features
+---
 
-- **Auth**: Admin/cashier login, RBAC middleware, forgot password
-- **Dashboard**: Revenue stats, sales chart, top products, low stock alerts
-- **POS**: Product search, barcode scan, cart, hold/resume, checkout, thermal print
-- **Products**: CRUD API, TanStack Table listing, SKU/barcode generation
-- **Inventory**: Stock adjustments with audit logs
-- **Modules**: Customers, suppliers, purchases, sales, expenses, employees, reports, branches, settings, notifications
-- **Real-time**: Optional Socket.IO server
-- **PWA**: `manifest.json` for offline-capable install
+## 🚀 Key Highlights & Architecture
 
-## Folder Structure
+- **Auth & Multi-Tenancy**: Firebase Auth + HttpOnly Session Cookies. Strict server-side role resolution (`admin`, `supervisor`, `cashier`, `employee`, `staff`) backed by canonical Firestore profiles (`tenants/{tenantId}/users/{uid}`). Zero dev bypass paths.
+- **Dedicated Workspaces**:
+  - **Admin Panel** (`/dashboard`): Strategic overview, sales analytics, catalog control, employee & role management, branch control, suppliers, expenses, and system settings.
+  - **Standalone Cashier Workspace** (`/workspace`): Mobile-first, phone-optimized cashier experience without Admin sidebar distraction.
+- **Product & Barcode Engine**:
+  - Code 128 vector SVG barcode generator & alphanumeric SKU engine.
+  - Hardware USB/Bluetooth keyboard scanner emulation with automatic focus recovery.
+  - Cross-platform phone camera barcode scanning powered by `@zxing/browser` and native `BarcodeDetector` (EAN-13 Indian 890..., EAN-8, UPC-A, Code 128, Code 39, QR).
+  - Strict tenant-scoped SKU and Barcode uniqueness validation with duplicate rejection.
+- **Server-Side Image Processing**:
+  - Sharp processing pipeline (`/api/upload`): Automatically converts image uploads to optimized **Master WebP** (max 1400px, 82% quality) and **Thumbnail WebP** (max 400px, 75% quality).
+  - Versioned storage paths (`products/{tenantId}/{productId}/image-v{version}.webp`).
+  - Automatic local filesystem fallback (`/public/uploads`) if Cloud Storage bucket is unprovisioned.
+- **Complete Billing & Thermal Receipt Engine**:
+  - Cash (with tendered amount & change computation), UPI (with UTR/reference verification), Card, and Other payment methods.
+  - Thermal receipt printing (58mm, 80mm, standard browser print).
+  - Atomic Firestore transaction checkout (`SaleService`) guaranteeing single inventory decrements and zero double-charging.
+  - Idempotency protection preventing duplicate sales on double-clicks or network retries.
+  - Full thermal receipt reprinting from Sales History (`/sales`).
+- **Offline Reliability**:
+  - Native browser IndexedDB local transaction queue (`/lib/offline-db.ts`).
+  - Automatic background synchronization when network reconnects (`/api/sales/sync`).
+- **Performance & Skeletons**:
+  - `boneyard-js` responsive layout skeletons across `/dashboard`, `/products`, `/sales`, and `/workspace`.
+  - Next.js `<Image />` rendering with `remotePatterns` configuration for Cloud Storage domains.
+
+---
+
+## 📁 Folder Structure
 
 ```
-src/
-├── app/                    # App Router pages & API routes
-│   ├── (auth)/             # Login, forgot password
-│   ├── (dashboard)/        # Protected dashboard pages
-│   └── api/                # REST API handlers
-├── actions/                # Server Actions
-├── components/             # UI, layout, POS, dashboard
-├── hooks/                  # Custom React hooks
-├── lib/                    # DB, auth, utils, print
-├── models/                 # Mongoose schemas
-├── repositories/           # Data access layer
-├── services/               # Business logic
-├── stores/                 # Zustand (cart)
-├── types/                  # TypeScript types
-└── validations/            # Zod schemas
-scripts/seed.ts             # Database seed
-server/socket-server.ts     # Socket.IO
+d:/POS/
+├── src/
+│   ├── app/                    # App Router pages & API routes
+│   │   ├── (auth)/             # Login & session routing
+│   │   ├── (dashboard)/        # Admin dashboard pages (products, sales, employees, etc.)
+│   │   ├── (workspace)/        # Standalone Cashier Workspace (/workspace)
+│   │   ├── api/                # Production API handlers (auth, products, sales, upload, etc.)
+│   │   ├── about/              # Public storefront pages
+│   │   ├── contact/
+│   │   └── products/
+│   ├── components/             # Reusable UI components
+│   │   ├── architect-pos/      # Hero scanner & homepage components
+│   │   ├── layout/             # Dashboard shell, header, sidebar, workspace shell
+│   │   ├── pos/                # POS terminal, cart, camera scanner, payment modals
+│   │   ├── products/           # Product management dialogs, barcode modal
+│   │   ├── public/             # Public storefront header, footer, role-aware CTA button
+│   │   ├── providers/          # Session & theme providers
+│   │   └── ui/                 # Brand Orange UI primitives & Boneyard skeletons
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Firebase Admin SDK, auth helpers, printer engine, tenant store
+│   ├── repositories/           # Firestore data repositories (ProductRepo, SaleRepo, etc.)
+│   ├── services/               # Core business services (SaleService, DashboardService)
+│   ├── stores/                 # Zustand state stores (cart store)
+│   ├── types/                  # TypeScript domain interfaces & permission types
+│   └── validations/            # Zod validation schemas
+├── public/                     # Static assets, icons (192/512 PNG), local uploads
+├── scripts/                    # Database seeds, test suites, PWA icon generators
+└── next.config.ts              # Next.js configuration & remote image patterns
 ```
 
-## Quick Start
+---
+
+## 🛠️ Quick Start
 
 ### 1. Prerequisites
 
-- Node.js 18+
-- MongoDB (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
+- **Node.js**: v18+ (tested on v24.14.1)
+- **npm**: 10+ (tested on v11.11.0)
+- **Firebase Project**: Cloud Firestore enabled in Native mode.
 
-### 2. Install & Configure
+### 2. Install Dependencies & Configure Environment
 
 ```bash
-cd pos_system
 npm install
-cp .env.example .env.local
 ```
 
-Edit `.env.local`:
+Create or update `.env.local`:
 
 ```env
-MONGODB_URI=mongodb://127.0.0.1:27017/pos_system
-AUTH_SECRET=generate-a-random-32-char-string
-AUTH_URL=http://localhost:3000
+FIREBASE_PROJECT_ID=pos-system-adf33
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@pos-system-adf33.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=pos-system-adf33
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=pos-system-adf33.firebaseapp.com
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Generate `AUTH_SECRET`:
+### 3. Build & Run
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### 3. Seed Database
-
-```bash
-npm run seed
-```
-
-Default accounts:
-
-| Role    | Email              | Password      |
-|---------|--------------------|---------------|
-| Admin   | admin@pos.local    | Admin@123456  |
-| Cashier | cashier@pos.local  | Cashier@123   |
-
-### 4. Run Development Server
-
-```bash
+# Development Server
 npm run dev
+
+# Type Check & Lint
+npx tsc --noEmit
+npm run lint
+
+# Production Build
+npm run build
+npm run start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → redirects to dashboard.
+---
 
-### 5. Optional: Socket.IO (real-time)
+## 🧪 Automated Verification & Test Suites
+
+The codebase includes end-to-end integration test scripts to verify production readiness:
 
 ```bash
-npm run socket
+# 1. Product A-Z CRUD & WebP Pipeline Test
+npx tsx --env-file=.env.local scripts/test-product-pipeline.ts
+
+# 2. Performance & Collision Rejection Test
+npx tsx --env-file=.env.local scripts/test-fast-perf.ts
+
+# 3. Mobile POS Flow & Inventory Decrement Test
+npx tsx --env-file=.env.local scripts/test-mobile-pos-flow.ts
 ```
 
-Add to `.env.local`:
+---
 
-```env
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-SOCKET_PORT=3001
-```
+## 📄 License
 
-## New Features
-
-### Customers & Suppliers (full CRUD)
-- `/customers` — add, edit, search, deactivate customers
-- `/suppliers` — add, edit, search, deactivate suppliers
-- APIs: `GET/POST /api/customers`, `GET/PUT/DELETE /api/customers/[id]` (same for suppliers)
-
-### Reports (PDF / Excel / CSV)
-- `/reports` — preview and export sales, inventory, customer, and P&L reports
-- API: `GET /api/reports?type=sales|inventory|customers|profit&days=30`
-
-### Product images (Cloudinary)
-- Add Product dialog includes image upload
-- API: `POST /api/upload` (multipart form field `file`)
-- With Cloudinary env vars → uploads to cloud; without → stores base64 locally
-
-```env
-CLOUDINARY_CLOUD_NAME=your_cloud
-CLOUDINARY_API_KEY=your_key
-CLOUDINARY_API_SECRET=your_secret
-```
-
-## API Examples
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products/search?q=mouse` | Search products (POS) |
-| GET | `/api/products/barcode/:code` | Barcode lookup |
-| GET | `/api/products?page=1&limit=20` | Paginated products |
-| POST | `/api/products` | Create product |
-| POST | `/api/sales/checkout` | Complete sale |
-| POST | `/api/inventory/adjust` | Adjust stock |
-| GET | `/api/dashboard` | Dashboard stats |
-| POST | `/api/auth/forgot-password` | Password reset |
-
-## Thermal Printing
-
-After checkout, the POS opens a print window with 80mm receipt layout. Configure your OS default printer or use browser print → thermal printer.
-
-## Deploy to Vercel
-
-1. Push to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Set environment variables:
-   - `MONGODB_URI` (Atlas connection string)
-   - `AUTH_SECRET`
-   - `AUTH_URL` (your production URL)
-   - `NEXT_PUBLIC_APP_URL`
-4. Deploy
-
-**Note**: Socket.IO requires a separate Node host (Railway, Render, etc.) — Vercel serverless does not support persistent WebSockets.
-
-### MongoDB Atlas
-
-1. Create free cluster
-2. Database Access → user + password
-3. Network Access → allow `0.0.0.0/0` (or Vercel IPs)
-4. Connect → copy connection string to `MONGODB_URI`
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run start` | Start production |
-| `npm run seed` | Seed database |
-| `npm run socket` | Socket.IO server |
-| `npm run lint` | ESLint |
-
-## Tech Stack
-
-- Next.js 16 + React 19 + TypeScript
-- MongoDB + Mongoose
-- NextAuth v5 (Credentials)
-- Tailwind CSS 4 + Radix UI primitives
-- Zustand, React Hook Form, Zod
-- Recharts, TanStack Table
-- Socket.IO (optional)
-
-## License
-
-MIT
+Enterprise POS Architecture — Developed for Production Deployment.

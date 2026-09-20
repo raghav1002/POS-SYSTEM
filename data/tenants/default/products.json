@@ -1,5 +1,126 @@
 [
   {
+    "_id": "xWnBINC7rPKZG46l7ixT",
+    "id": "xWnBINC7rPKZG46l7ixT",
+    "name": "TEST E2E RETAIL PRODUCT",
+    "slug": "test-e2e-retail-product",
+    "sku": "SKU-POS-7863",
+    "barcode": "8901234317863",
+    "images": [
+      "/public/uploads/test-product.webp"
+    ],
+    "costPrice": 60,
+    "sellingPrice": 100,
+    "taxRate": 0,
+    "stock": 10,
+    "lowStockThreshold": 3,
+    "unit": "pcs",
+    "variants": [],
+    "isActive": true,
+    "createdAt": "2026-09-20T13:01:59.465Z",
+    "updatedAt": "2026-09-20T13:01:59.466Z"
+  },
+  {
+    "_id": "b1fj0U7Yk06L5aEuLhxP",
+    "id": "b1fj0U7Yk06L5aEuLhxP",
+    "name": "Perf Test Organic Tea",
+    "slug": "perf-test-organic-tea",
+    "sku": "PERF-SKU-9931",
+    "barcode": "890909029931",
+    "categoryName": "Beverages",
+    "images": [
+      "/public/uploads/test-tea.webp"
+    ],
+    "costPrice": 90,
+    "sellingPrice": 175,
+    "taxRate": 0,
+    "stock": 48,
+    "lowStockThreshold": 5,
+    "unit": "pcs",
+    "variants": [],
+    "isActive": true,
+    "createdAt": "2026-09-20T12:57:11.295Z",
+    "updatedAt": "2026-09-20T12:57:12.252Z",
+    "description": "",
+    "categoryId": "",
+    "brandId": "",
+    "brandName": ""
+  },
+  {
+    "_id": "HBzyReeuyZdB8xWoKD81",
+    "id": "HBzyReeuyZdB8xWoKD81",
+    "name": "Test 1",
+    "slug": "test-1",
+    "sku": "SKU-345830",
+    "barcode": "789908345830",
+    "description": "nane",
+    "categoryId": "cat-accessories",
+    "brandId": "",
+    "images": [
+      "/uploads/tenants/default/products/prod_1789908362921_55f03c55/image-v1789908362921.webp"
+    ],
+    "costPrice": 1245,
+    "sellingPrice": 1890,
+    "taxRate": 18,
+    "stock": 10,
+    "lowStockThreshold": 5,
+    "unit": "pcs",
+    "variants": [],
+    "isActive": true,
+    "createdAt": "2026-09-20T12:46:45.938Z",
+    "updatedAt": "2026-09-20T12:46:45.940Z"
+  },
+  {
+    "_id": "wotM7AdKl9A2ti82lmiS",
+    "id": "wotM7AdKl9A2ti82lmiS",
+    "name": "Test Organic Coffee Beans 1789906263946",
+    "slug": "test-organic-coffee-beans-1789906263946",
+    "sku": "SKU-06263946",
+    "barcode": "BAR-06263946",
+    "description": "High quality roasted coffee beans for POS testing.",
+    "images": [
+      "/uploads/tenants/default/products/test_pipe_prod_1789906263946/image-v1789906268563.webp"
+    ],
+    "costPrice": 250,
+    "sellingPrice": 450,
+    "taxRate": 18,
+    "stock": 50,
+    "lowStockThreshold": 10,
+    "unit": "pack",
+    "variants": [
+      {
+        "name": "1kg Pack",
+        "sku": "SKU-06263946-1KG",
+        "barcode": "BAR-06263946-V1",
+        "price": 850,
+        "stock": 20
+      }
+    ],
+    "isActive": false,
+    "createdAt": "2026-09-20T12:11:04.984Z",
+    "updatedAt": "2026-09-20T12:11:08.937Z",
+    "categoryId": "",
+    "categoryName": "",
+    "brandId": "",
+    "brandName": "",
+    "image": {
+      "path": "tenants/default/products/test_pipe_prod_1789906263946/image-v1789906268563.webp",
+      "format": "webp",
+      "width": 1400,
+      "version": 1789906268563,
+      "url": "/uploads/tenants/default/products/test_pipe_prod_1789906263946/image-v1789906268563.webp",
+      "height": 1050
+    },
+    "thumbnail": {
+      "path": "tenants/default/products/test_pipe_prod_1789906263946/thumb-v1789906268563.webp",
+      "format": "webp",
+      "width": 400,
+      "version": 1789906268563,
+      "url": "/uploads/tenants/default/products/test_pipe_prod_1789906263946/thumb-v1789906268563.webp",
+      "height": 300
+    }
+  },
+  {
     "_id": "prod-cotton-tshirt",
     "id": "prod-cotton-tshirt",
     "name": "Classic Cotton T-Shirt",

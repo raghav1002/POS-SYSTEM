@@ -1,3 +1,116 @@
+## [2026-09-20] — Real Phone Barcode Engine & E2E Checkout Verification
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Added
+- **Multi-Format Browser Barcode Scanner Engine (`@zxing/browser`)**:
+  - Integrated `@zxing/browser` (`BrowserMultiFormatReader`) in `CameraBarcodeScanner` (`src/components/pos/camera-barcode-scanner.tsx`) providing cross-platform hardware decoding for EAN-13 (890... Indian retail barcodes), EAN-8, UPC-A, Code 128, Code 39, and QR codes across iOS Safari and Android Chrome devices.
+- **Secure Context & Hardware Diagnostics**:
+  - Added `window.isSecureContext` evaluation and clear user notifications when accessing cameras via non-secure HTTP LAN IP origins versus Localhost/HTTPS.
+- **Duplicate Frame Scan Suppression**:
+  - Implemented 1500ms duplicate code suppression guard (`lastScannedCodeRef`) preventing fast frame rates from emitting duplicate cart items.
+- **End-to-End Mobile POS Automated Test Suite (`scripts/test-mobile-pos-flow.ts`)**:
+  - Verified exact 5-step flow: Product creation (Stock=10, 890... barcode) → Barcode lookup → Sale #1 checkout (Quantity=1, stock decremented to 9) → Duplicate checkout idempotency check (stock remains 9) → Sale #2 checkout (Quantity=2, stock decremented to 7) → Sales History invoice retrieval.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 5 warnings).
+- `npm run build`: **PASS** (54 static & dynamic routes compiled successfully).
+- E2E Test Suite (`scripts/test-mobile-pos-flow.ts`): **PASSED 5/5 STEPS**.
+
+## [2026-09-20] — Performance Optimization, Product/SKU/Barcode Flow & Boneyard.js Skeletons
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Added
+- **SKU & Barcode Collision Rejection Engine (`src/repositories/product.repository.ts`)**:
+  - Implemented `findBySku(sku, tenantId)` method.
+  - Added strict SKU and Barcode uniqueness validation in `create()` and `update()` methods, cleanly rejecting duplicates with user-friendly messages.
+- **Boneyard.js Responsive Skeleton Integration (`src/lib/boneyard-config.ts` & `loading.tsx`)**:
+  - Installed and configured `boneyard-js` with responsive viewport layout tracking.
+  - Implemented client-safe layout-stable `loading.tsx` skeletons for `/dashboard`, `/products`, `/sales`, and `/workspace`.
+- **PWA Icon Asset Provisioning (`public/icons/`)**:
+  - Generated valid high-resolution 192x192 and 512x512 PNG PWA icons in `public/icons/icon-192.png` and `public/icons/icon-512.png`, completely eliminating the `GET /icons/icon-192.png 404` warning.
+
+### Fixed
+- **SSR Prerender Errors in Loading Boundaries**:
+  - Enforced `"use client";` in `loading.tsx` routes importing `boneyard-js/react` to prevent `useRef is not a function` errors during static generation.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 5 warnings).
+- `npm run build`: **PASS** (54 static & dynamic routes compiled successfully).
+- Verification Suite (`scripts/test-fast-perf.ts`): **PASSED 6/6 TESTS**.
+
+## [2026-09-20] — Public Navbar Role-Aware CTA Button Engine
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Added
+- **Central Role-Aware CTA Mapping Helper (`src/lib/role-cta.ts`)**:
+  - Implemented single canonical mapping function `getRoleCta(user, status)` resolving role-based destinations.
+  - `admin` → Label: `Admin Dashboard`, Href: `/dashboard`
+  - `supervisor` → Label: `Supervisor Workspace`, Href: `/workspace`
+  - `cashier` → Label: `POS Workspace`, Href: `/workspace`
+  - `employee` / `staff` / `manager` → Label: `Employee Workspace`, Href: `/workspace`
+  - Unauthenticated / missing user / inactive account → Label: `Staff Sign In`, Href: `/login`
+  - Unprovisioned / unknown auth account → Label: `Staff Sign In`, Href: `/login`
+  - Loading state → Label: `Loading...`, Href: `#` (prevents layout shift and flashing of `Admin Dashboard`).
+- **Reusable `<RoleCtaButton />` Component (`src/components/public/role-cta-button.tsx`)**:
+  - Client component supporting hydration stability, loading skeletons, custom sizes, and full-width layout parameters.
+- **Role-Aware Header Integration (`src/components/public/public-header.tsx` & `src/components/architect-pos/pos-header.tsx`)**:
+  - Replaced legacy hardcoded buttons in both public storefront header components with `<RoleCtaButton />`.
+  - Added mobile menu drawers to desktop and mobile navigation wrappers ensuring exact role CTA parity across mobile and desktop.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 5 warnings).
+
+## [2026-09-20] — Sharp Server-Side WebP Image Pipeline, Firebase Storage Versioning & Code Quality Audit
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Added
+- **Sharp Server-Side WebP Image Processing Pipeline (`src/app/api/upload/route.ts`)**:
+  - Process original image inputs into optimized WebP formats server-side using `sharp`.
+  - Master image: Max width 1400px, 82% WebP quality.
+  - Thumbnail image: Max width 400px, 75% WebP quality.
+  - Stores structured versioned paths in Firebase Storage: `products/{tenantId}/{productId}/image-v{version}.webp` and `thumb-v{version}.webp`.
+  - Added resilient local filesystem fallback (`public/uploads/...`) when Firebase Cloud Storage bucket is unprovisioned, ensuring zero upload failures.
+- **Enhanced Product Schema & Repositories (`src/repositories/product.repository.ts`)**:
+  - Updated `IProduct` interface and Firestore doc mapping to store structured `image` (`url`, `path`, `updatedAt`) and `thumbnail` (`url`, `path`, `updatedAt`) metadata objects.
+  - Added safe old image file cleanup on product updates.
+- **Product Form & Mobile Camera Capture (`src/components/products/product-form-dialog.tsx`)**:
+  - Integrated mobile camera capture (`capture="environment"`) and image preview in product creation/edit form.
+- **POS Thumbnail Rendering (`src/components/pos/pos-screen.tsx`)**:
+  - Render optimized product thumbnails using Next.js `<Image />` component with `remotePatterns` configuration for `firebasestorage.googleapis.com` and `storage.googleapis.com`.
+
+### Fixed
+- **ESLint Hoisting Error in Hardware Barcode Scanner (`src/components/architect-pos/scanner-module.tsx`)**:
+  - Moved `handleBarcodeScanned` function above `useEffect` hook to resolve ESLint variable usage before declaration error.
+- **Syntax & Import Errors**:
+  - Fixed syntax issue in `pos-screen.tsx` (`products.map`).
+  - Corrected `adminStorage` import path in `product.repository.ts`.
+  - Added explicit `Metadata` return type annotation for Sharp metadata extraction in upload route handler.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 7 warnings).
+- `npm run build`: **PASS** (54 static and dynamic routes compiled in Next.js Turbopack).
+- Pipeline test suite (`scripts/test-product-pipeline.ts`): **PASSED**.
+
 ## [2026-09-20] — Alphanumeric Barcode Button & Interactive Barcode Modal (`/dashboard/products`)
 
 ### Author

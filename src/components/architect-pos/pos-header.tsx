@@ -1,14 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSession } from "@/components/providers/session-provider";
+import { Store, Menu, X } from "lucide-react";
+import { RoleCtaButton } from "@/components/public/role-cta-button";
 
 export function POSHeader() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#723C1A]/15 bg-[#FAF6EE]/90 backdrop-blur-md px-4 lg:px-8">
@@ -28,7 +28,7 @@ export function POSHeader() {
           </div>
         </Link>
 
-        {/* Center Nav */}
+        {/* Desktop Center Nav */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-bold text-[#5C4033]">
           <Link
             href="/"
@@ -56,25 +56,73 @@ export function POSHeader() {
           </Link>
         </nav>
 
-        {/* Action Button */}
-        <div className="flex items-center gap-3">
-          {session?.user ? (
-            <Button asChild size="sm" className="bg-[#723C1A] hover:bg-[#8B4513] text-white font-bold text-xs rounded-xl shadow-md">
-              <Link href={session.user.role === "cashier" ? "/pos" : "/dashboard"}>
-                <User className="mr-1.5 h-4 w-4" />
-                {session.user.role === "cashier" ? "Open POS Workspace" : "Admin Dashboard"}
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild size="sm" className="bg-[#723C1A] hover:bg-[#8B4513] text-white font-bold text-xs rounded-xl shadow-md">
-              <Link href="/login">
-                <User className="mr-1.5 h-4 w-4" />
-                Staff Sign In
-              </Link>
-            </Button>
-          )}
+        {/* Desktop Right Action Button */}
+        <div className="hidden md:flex items-center gap-3">
+          <RoleCtaButton
+            className="bg-[#723C1A] hover:bg-[#8B4513] text-white font-bold text-xs rounded-xl shadow-md border-none"
+            size="sm"
+          />
+        </div>
+
+        {/* Mobile Menu Toggle Button */}
+        <div className="flex md:hidden items-center gap-2">
+          <RoleCtaButton
+            className="bg-[#723C1A] hover:bg-[#8B4513] text-white font-bold text-xs rounded-xl shadow-md border-none"
+            size="sm"
+          />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-[#723C1A] hover:text-[#2C1810] focus:outline-none"
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6 text-[#E85002]" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[#723C1A]/15 bg-[#FAF6EE] p-4 space-y-3">
+          <nav className="flex flex-col space-y-2 text-sm font-medium text-[#5C4033]">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/" ? "bg-[#723C1A]/10 text-[#723C1A] font-bold" : "hover:bg-[#723C1A]/5"}`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/products"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname.startsWith("/products") ? "bg-[#723C1A]/10 text-[#723C1A] font-bold" : "hover:bg-[#723C1A]/5"}`}
+            >
+              Products
+            </Link>
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/about" ? "bg-[#723C1A]/10 text-[#723C1A] font-bold" : "hover:bg-[#723C1A]/5"}`}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname === "/contact" ? "bg-[#723C1A]/10 text-[#723C1A] font-bold" : "hover:bg-[#723C1A]/5"}`}
+            >
+              Contact
+            </Link>
+          </nav>
+
+          <div className="pt-2 border-t border-[#723C1A]/10">
+            <RoleCtaButton
+              className="bg-[#723C1A] hover:bg-[#8B4513] text-white font-bold text-xs rounded-xl shadow-md border-none"
+              size="sm"
+              fullWidth
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

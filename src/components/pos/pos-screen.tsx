@@ -41,7 +41,8 @@ import { printThermalReceipt } from "@/lib/print-invoice";
 import { saveOfflineSale, syncPendingSales } from "@/lib/offline-db";
 import { CameraBarcodeScanner } from "@/components/pos/camera-barcode-scanner";
 import { useSession } from "@/components/providers/session-provider";
-import { FileText, CheckCircle2 } from "lucide-react";
+import { FileText } from "lucide-react";
+import Image from "next/image";
 import type { CartItem } from "@/types";
 
 interface ProductResult {
@@ -52,6 +53,8 @@ interface ProductResult {
   sellingPrice: number;
   stock: number;
   images?: string[];
+  image?: { url: string };
+  thumbnail?: { url: string };
   taxRate?: number;
 }
 
@@ -472,27 +475,41 @@ export function PosScreen() {
         {/* Products Grid */}
         <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4 content-start pr-1">
           {loading && <p className="col-span-full text-center text-zinc-500 py-12 text-xs font-medium">Searching catalog...</p>}
-          {products.map((product) => (
-            <button
-              key={product._id}
-              type="button"
-              onClick={() => addProductToCart(product)}
-              className="flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-950 p-3.5 text-left transition-all duration-150 hover:border-[#E85002] hover:shadow-lg hover:shadow-[#E85002]/10 focus:outline-none focus:ring-2 focus:ring-[#E85002] group"
-            >
-              <div>
-                <span className="line-clamp-2 text-xs font-bold text-zinc-100 group-hover:text-white">{product.name}</span>
-                <span className="mt-1.5 block text-sm font-black text-[#E85002] font-mono">
-                  {formatCurrency(product.sellingPrice)}
-                </span>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-400">
-                <Badge variant={product.stock <= 5 ? "warning" : "secondary"} className="text-[10px] px-2 py-0.5 font-bold">
-                  Stock: {product.stock}
-                </Badge>
-                {product.barcode && <span className="font-mono text-[9px] text-zinc-500">|||</span>}
-              </div>
-            </button>
-          ))}
+          {products.map((product) => {
+            const imgUrl = product.thumbnail?.url || product.image?.url || product.images?.[0];
+            return (
+              <button
+                key={product._id}
+                type="button"
+                onClick={() => addProductToCart(product)}
+                className="flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-950 p-3.5 text-left transition-all duration-150 hover:border-[#E85002] hover:shadow-lg hover:shadow-[#E85002]/10 focus:outline-none focus:ring-2 focus:ring-[#E85002] group"
+              >
+                <div>
+                  {imgUrl ? (
+                    <div className="relative mb-2 h-24 w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800/60">
+                      <Image
+                        src={imgUrl}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                    </div>
+                  ) : null}
+                  <span className="line-clamp-2 text-xs font-bold text-zinc-100 group-hover:text-white">{product.name}</span>
+                  <span className="mt-1.5 block text-sm font-black text-[#E85002] font-mono">
+                    {formatCurrency(product.sellingPrice)}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-400">
+                  <Badge variant={product.stock <= 5 ? "warning" : "secondary"} className="text-[10px] px-2 py-0.5 font-bold">
+                    Stock: {product.stock}
+                  </Badge>
+                  {product.barcode && <span className="font-mono text-[9px] text-zinc-500">|||</span>}
+                </div>
+              </button>
+            );
+          })}
           {!loading && products.length === 0 && (
             <div className="col-span-full rounded-2xl border border-dashed border-zinc-800 p-12 text-center">
               <ShoppingBag className="mx-auto h-8 w-8 text-zinc-600 mb-2 opacity-60" />

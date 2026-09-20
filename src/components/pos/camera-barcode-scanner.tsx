@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, RefreshCw } from "lucide-react";
+import { Camera, RefreshCw, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 
 interface Props {
   open: boolean;
@@ -16,84 +17,118 @@ interface Props {
 export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const zxingControlsRef = useRef<IScannerControls | null>(null);
   const [manualCode, setManualCode] = useState("");
   const [hasCamera, setHasCamera] = useState(true);
   const [cameraError, setCameraError] = useState("");
+  const [isInitializing, setIsInitializing] = useState(false);
   const scanningRef = useRef(false);
-  const detectRef = useRef<() => void>(() => {});
+  const lastScannedCodeRef = useRef<{ code: string; time: number }>({ code: "", time: 0 });
 
   const stopCamera = useCallback(() => {
     scanningRef.current = false;
+
+    if (zxingControlsRef.current) {
+      try {
+        zxingControlsRef.current.stop();
+      } catch {
+        // Ignore stop errors
+      }
+      zxingControlsRef.current = null;
+    }
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
   }, []);
 
-  const detectBarcode = useCallback(async () => {
-    if (!scanningRef.current || !videoRef.current) return;
+  const handleDecodedBarcode = useCallback(
+    (rawValue: string) => {
+      const clean = (rawValue || "").trim();
+      if (!clean) return;
 
-    if ("BarcodeDetector" in window) {
-      try {
-        // @ts-expect-error Native BarcodeDetector API
-        const barcodeDetector = new window.BarcodeDetector({
-          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"],
-        });
-
-        const barcodes = await barcodeDetector.detect(videoRef.current);
-        if (barcodes && barcodes.length > 0) {
-          const rawValue = barcodes[0].rawValue;
-          if (rawValue) {
-            scanningRef.current = false;
-            stopCamera();
-            onScan(rawValue);
-            onOpenChange(false);
-            toast.success(`Scanned: ${rawValue}`);
-            return;
-          }
-        }
-      } catch {
-        // fallback
+      const now = Date.now();
+      // Deduplicate scans emitted across fast video frames within 1500ms
+      if (lastScannedCodeRef.current.code === clean && now - lastScannedCodeRef.current.time < 1500) {
+        return;
       }
-    }
 
-    if (scanningRef.current) {
-      requestAnimationFrame(() => detectRef.current());
-    }
-  }, [stopCamera, onScan, onOpenChange]);
-
-  useEffect(() => {
-    detectRef.current = detectBarcode;
-  }, [detectBarcode]);
+      lastScannedCodeRef.current = { code: clean, time: now };
+      scanningRef.current = false;
+      stopCamera();
+      onScan(clean);
+      onOpenChange(false);
+      toast.success(`Scanned: ${clean}`);
+    },
+    [stopCamera, onScan, onOpenChange]
+  );
 
   const startCamera = useCallback(async () => {
     setCameraError("");
+    setIsInitializing(true);
+
+    // 1. Secure context check
+    if (
+      typeof window !== "undefined" &&
+      !window.isSecureContext &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
+      setHasCamera(false);
+      setIsInitializing(false);
+      setCameraError(
+        "Camera requires HTTPS or localhost. If testing on mobile LAN, use HTTPS or enter code manually below."
+      );
+      return;
+    }
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setHasCamera(false);
+        setIsInitializing(false);
         setCameraError("Camera API not supported on this browser.");
         return;
       }
 
+      // Request rear/environment camera stream
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
 
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+        await videoRef.current.play().catch(() => {});
       }
 
       scanningRef.current = true;
-      detectBarcode();
-    } catch (err) {
+      setHasCamera(true);
+      setIsInitializing(false);
+
+      // Initialize ZXing MultiFormat Decoder for robust multi-format retail support (EAN-13, EAN-8, UPC-A, Code128, Code39, QR)
+      const codeReader = new BrowserMultiFormatReader();
+      if (videoRef.current) {
+        const controls = await codeReader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result && scanningRef.current) {
+            handleDecodedBarcode(result.getText());
+          }
+        });
+        zxingControlsRef.current = controls;
+      }
+    } catch (err: unknown) {
       console.warn("Camera access error:", err);
       setHasCamera(false);
-      setCameraError("Unable to access camera. Please allow camera permissions or enter code manually.");
+      setIsInitializing(false);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes("NotAllowedError") || errMsg.includes("Permission")) {
+        setCameraError("Camera permission denied. Please grant permission in browser settings or type code below.");
+      } else {
+        setCameraError("Unable to access camera. Enter code manually below.");
+      }
     }
-  }, [detectBarcode]);
+  }, [handleDecodedBarcode]);
 
   useEffect(() => {
     if (open) {
@@ -108,8 +143,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     e.preventDefault();
     if (!manualCode.trim()) return;
     stopCamera();
-    onScan(manualCode.trim());
-    onOpenChange(false);
+    handleDecodedBarcode(manualCode.trim());
     setManualCode("");
   };
 
@@ -122,38 +156,33 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
             Barcode Camera Scanner
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-400">
-            Use camera to scan product barcode or type barcode manually.
+            Point phone camera at retail barcode (EAN-13, UPC, Code 128) or enter code manually.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Camera Viewport */}
           <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-900 flex items-center justify-center">
-            {hasCamera ? (
+            {isInitializing ? (
+              <div className="p-4 text-center text-zinc-400 space-y-2">
+                <RefreshCw className="mx-auto h-8 w-8 animate-spin text-[#E85002]" />
+                <p className="text-xs">Initializing camera feed...</p>
+              </div>
+            ) : hasCamera ? (
               <>
-                <video
-                  ref={videoRef}
-                  playsInline
-                  muted
-                  className="h-full w-full object-cover"
-                />
-                {/* Visual Laser Scanner Overlay */}
+                <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
+                {/* Visual Laser Scanner Overlay & Guide Reticle */}
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <div className="relative h-44 w-64 rounded-lg border-2 border-dashed border-[#E85002]/80">
-                    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse" />
+                    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)] animate-pulse" />
                   </div>
                 </div>
               </>
             ) : (
-              <div className="p-4 text-center text-zinc-400">
-                <Camera className="mx-auto h-8 w-8 mb-2 text-zinc-500" />
-                <p className="text-xs">{cameraError || "Camera not active."}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3 text-xs"
-                  onClick={startCamera}
-                >
+              <div className="p-4 text-center text-zinc-400 space-y-2 max-w-xs mx-auto">
+                <AlertTriangle className="mx-auto h-8 w-8 text-amber-500" />
+                <p className="text-xs leading-relaxed">{cameraError || "Camera not active."}</p>
+                <Button size="sm" variant="outline" className="mt-2 text-xs" onClick={startCamera}>
                   <RefreshCw className="mr-1 h-3 w-3" /> Retry Camera
                 </Button>
               </div>
@@ -161,7 +190,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
           </div>
 
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-            Align barcode inside the guide box. The scanner will automatically detect and add the item.
+            Center barcode within reticle. Works with standard 890... EAN-13, Code 128 & UPC labels.
           </p>
 
           {/* Manual Input Fallback */}

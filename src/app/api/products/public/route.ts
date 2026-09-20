@@ -8,7 +8,35 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category") || undefined;
     const search = searchParams.get("search") || undefined;
+    const barcode = searchParams.get("barcode") || undefined;
     const limit = Number(searchParams.get("limit") || 50);
+
+    // 1. Direct Barcode Lookup (for public home page scanner)
+    if (barcode) {
+      const p = await repo.findByBarcode(barcode, "default");
+      if (p && p.isActive !== false) {
+        return NextResponse.json({
+          success: true,
+          data: [
+            {
+              _id: p._id,
+              id: p.id,
+              name: p.name,
+              description: p.description ?? "",
+              sellingPrice: p.sellingPrice,
+              stock: p.stock,
+              isAvailable: p.stock > 0,
+              categoryId: p.categoryId ?? "",
+              images: p.images ?? [],
+              image: p.image,
+              thumbnail: p.thumbnail,
+              sku: p.sku,
+              barcode: p.barcode ?? "",
+            },
+          ],
+        });
+      }
+    }
 
     const result = await repo.paginate(
       {

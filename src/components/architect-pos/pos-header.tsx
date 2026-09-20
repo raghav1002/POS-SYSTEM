@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { RoleCtaButton } from "@/components/public/role-cta-button";
 
 export function POSHeader() {
@@ -15,9 +15,6 @@ export function POSHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#723C1A] to-[#4A230E] text-white shadow-md shadow-[#723C1A]/20 group-hover:scale-105 transition-transform">
-            <Store className="h-5 w-5" />
-          </div>
           <div className="flex flex-col">
             <span className="text-base font-extrabold leading-none tracking-wide text-[#2C1810]">
               RetailPOS

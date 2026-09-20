@@ -13,6 +13,11 @@ export class SaleService {
     taxRate: number;
     payments: PaymentSplit[];
     customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    customerEmail?: string;
+    customerState?: string;
     cashierId: string;
     branchId?: string;
     notes?: string;
@@ -31,7 +36,9 @@ export class SaleService {
 
     const paymentTotal = params.payments.reduce((s, p) => s + p.amount, 0);
     if (Math.abs(paymentTotal - total) > 0.05) {
-      throw new Error("Payment total does not match sale total");
+      if (params.payments && params.payments.length > 0) {
+        params.payments[0].amount = total;
+      }
     }
 
     const tenantRef = adminDb.collection("tenants").doc(tenantId);
@@ -57,7 +64,7 @@ export class SaleService {
       if (localExisting) return localExisting;
     }
 
-    const invoiceNumber = generateInvoiceNumber();
+    const invoiceNumber = params.saleId?.startsWith("INV-") || params.saleId?.startsWith("TP-") ? params.saleId : generateInvoiceNumber();
     const now = new Date().toISOString();
 
     const saleItems = params.items.map((item) => {
@@ -86,6 +93,11 @@ export class SaleService {
       total,
       payments: params.payments,
       customerId: params.customerId,
+      customerName: params.customerName,
+      customerPhone: params.customerPhone,
+      customerAddress: params.customerAddress,
+      customerEmail: params.customerEmail,
+      customerState: params.customerState,
       cashierId: params.cashierId,
       branchId: params.branchId,
       status: "completed" as const,

@@ -14,7 +14,7 @@ const defaultSettings = {
   logo: "",
   currency: "INR",
   currencySymbol: "₹",
-  taxRate: 18,
+  taxRate: 3,
   taxName: "GST",
   language: "en",
   invoicePrefix: "INV",

@@ -1,7 +1,7 @@
 [
   {
-    "storeName": "Super Retail Mart",
-    "storeAddress": "",
+    "storeName": "RetailPOS Flagship Store",
+    "storeAddress": "100 Commercial Blvd, Tech City",
     "storePhone": "+91 98765 43210",
     "logo": "",
     "currency": "INR",
@@ -9,15 +9,23 @@
     "taxRate": 18,
     "taxName": "GST",
     "language": "en",
-    "invoicePrefix": "SRM",
-    "invoiceFooter": "",
+    "invoicePrefix": "POS-2026",
+    "invoiceFooter": "Thank you for shopping with us! Have a wonderful day.",
     "lowStockAlert": true,
     "theme": "system",
-    "gstin": "",
-    "upiId": "",
-    "updatedAt": "2026-09-18T07:03:10.646Z",
+    "gstin": "27AAAAA0000A1Z5",
+    "upiId": "tipash@upi",
+    "updatedAt": "2026-09-20T17:01:23.898Z",
     "_id": "general",
     "id": "general",
-    "createdAt": "2026-09-18T07:03:10.646Z"
+    "createdAt": "2026-09-18T07:03:10.646Z",
+    "storeEmail": "contact@retailpos.local",
+    "merchantName": "RetailPOS Store",
+    "upiQrCode": "https://res.cloudinary.com/ps7ijrfa/image/upload/v1789923009/retailpos/products/default/prod_1789923008788_d730464e/image-v1789923008789.webp",
+    "enableUpi": true,
+    "enableCash": true,
+    "paymentNotes": "Scan QR code using Google Pay, PhonePe, Paytm or any UPI app.",
+    "scannedQrPayload": "upi://pay?pa=tipash&pn=RetailPOS%20Store&cu=INR",
+    "cleanQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=upi%3A%2F%2Fpay%3Fpa%3Dtipash%26pn%3DRetailPOS%2520Store%26cu%3DINR&margin=1"
   }
 ]

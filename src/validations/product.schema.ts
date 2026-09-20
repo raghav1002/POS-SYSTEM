@@ -41,7 +41,7 @@ export const saleCheckoutSchema = z.object({
     })
   ).min(1),
   discount: z.number().default(0),
-  taxRate: z.number().default(0),
+  taxRate: z.number().default(3),
   payments: z.array(
     z.object({
       method: z.enum(["cash", "upi", "card", "mobile", "bank", "credit", "other"]),

@@ -30,7 +30,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       discount: 0,
-      taxRate: 0,
+      taxRate: 3,
       heldCarts: [],
 
       addItem: (item) => {

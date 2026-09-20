@@ -4,7 +4,7 @@ import { ScannerModule } from "@/components/architect-pos/scanner-module";
 import { EditorialSidebars } from "@/components/architect-pos/editorial-sidebars";
 import { WorkflowIndicator } from "@/components/architect-pos/workflow-indicator";
 import Link from "next/link";
-import { Store, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export const revalidate = 60;
 
@@ -17,7 +17,7 @@ export default async function StorefrontHomePage() {
       </div>
 
       {/* 2. MAIN HERO SCANNER SECTION */}
-      <main className="flex-1 flex flex-col justify-center items-center px-4 py-6 relative z-20">
+      <main className="flex-1 min-h-0 flex flex-col justify-center items-center px-4 py-1.5 lg:py-3 relative z-20 overflow-hidden">
         {/* Left & Right Editorial Cards (xl breakpoint) */}
         <EditorialSidebars />
 
@@ -25,7 +25,7 @@ export default async function StorefrontHomePage() {
         <ScannerModule />
 
         {/* 3-Step Workflow Bar */}
-        <div className="mt-8 w-full">
+        <div className="mt-2 lg:mt-3 shrink-0 w-full">
           <WorkflowIndicator />
         </div>
       </main>
@@ -34,8 +34,8 @@ export default async function StorefrontHomePage() {
       <footer className="shrink-0 border-t border-[#723C1A]/15 bg-[#FAF6EE]/90 backdrop-blur-md py-3 px-4 lg:px-8 relative z-50">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#5C4033]">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 font-bold text-[#2C1810]">
-              <Store className="h-3.5 w-3.5 text-[#723C1A]" /> RetailPOS
+            <span className="font-bold text-[#2C1810]">
+              RetailPOS
             </span>
             <span className="hidden sm:inline text-[#723C1A]/30">|</span>
             <span className="hidden sm:inline flex items-center gap-1 text-[#5C4033]">

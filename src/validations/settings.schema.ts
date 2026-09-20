@@ -17,6 +17,13 @@ export const settingsSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
   gstin: z.string().optional(),
   upiId: z.string().optional(),
+  merchantName: z.string().optional(),
+  upiQrCode: z.string().optional(),
+  scannedQrPayload: z.string().optional(),
+  cleanQrCode: z.string().optional(),
+  enableUpi: z.boolean().optional(),
+  enableCash: z.boolean().optional(),
+  paymentNotes: z.string().optional(),
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

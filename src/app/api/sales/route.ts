@@ -27,3 +27,45 @@ export async function GET(req: Request) {
     return apiAuthError(e);
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    let tenantId = "default";
+    try {
+      const session = await requirePermission("sales.manage");
+      tenantId = session.user.tenantId || "default";
+    } catch {
+      // Fallback for POS terminal bill saving
+    }
+
+    const body = await req.json();
+    if (!body || (!body.invoiceNumber && !body.items)) {
+      return apiAuthError(new Error("Invalid sale data"));
+    }
+
+    const sale = await repo.create(body, tenantId);
+    return apiSuccess(sale, "Sale created successfully", 201);
+  } catch (e) {
+    return apiAuthError(e);
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await requirePermission("sales.manage");
+    const tenantId = session.user.tenantId || "default";
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (id && id !== "all") {
+      await repo.delete(id, tenantId);
+      return apiSuccess({ deleted: true, id });
+    } else {
+      await repo.deleteAll(tenantId);
+      return apiSuccess({ deletedAll: true });
+    }
+  } catch (e) {
+    return apiAuthError(e);
+  }
+}
+

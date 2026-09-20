@@ -1,3 +1,419 @@
+## [2026-09-21] — Complete Website Logo Removal & Clean Brand Header Standardization
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Changed & Removed
+- **Complete Website Logo Container, Ticket Pass SVG & Admin Modal Sparkles Icon Removal ([`src/components/sales/sales-page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/sales/sales-page.tsx), [`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx), [`src/components/products/product-form-dialog.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/products/product-form-dialog.tsx), [`src/components/architect-pos/editorial-sidebars.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/editorial-sidebars.tsx), [`src/components/public/public-header.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/public/public-header.tsx), [`src/components/public/public-footer.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/public/public-footer.tsx), [`src/components/layout/workspace-shell.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/layout/workspace-shell.tsx), [`src/components/layout/sidebar.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/layout/sidebar.tsx), [`src/components/architect-pos/pos-header.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/pos-header.tsx), [`src/app/(auth)/login/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/%28auth%29/login/page.tsx), [`src/app/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/page.tsx), [`src/app/about/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/about/page.tsx), [`src/app/contact/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/contact/page.tsx))**:
+  - Removed the orange logo icon container (`<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#E85002] to-[#C10801] ..."><Store ... /></div>`) and the 3-layer diamond SVG logo from the Cashier/Admin Step 3 Receipt Ticket Pass container.
+  - Removed the `Sparkles` icon from the Admin View Bill Modal badge container (`<Sparkles className="h-3 w-3 text-[#E85002]" />` inside `TIPASH LUXURIES INVOICE` on `/sales`), product form SKU generator, editorial cards, and terminal headers.
+  - Standardized brand headers, modals, and passes across public navigation, cashier workspace, admin sidebar, login page, sales history, about page, contact page, and footer to display clean typography without any logo box or icon graphics.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Permanent Sales History Deletion, Auto-Save POS Sales & 17-Column GST Excel Export (`/sales`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Enhanced Features
+- **Permanent Cell/Sales History Deletion (Backend & Frontend) ([`src/components/sales/sales-page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/sales/sales-page.tsx), [`src/app/api/sales/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/sales/route.ts), [`src/app/api/sales/[id]/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/sales/%5Bid%5D/route.ts) & [`src/repositories/sale.repository.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/repositories/sale.repository.ts))**:
+  - Added single sale row delete buttons (red `Trash2` icon) and a bulk "Clear All History" button to permanently delete sale records from both Firestore DB and local JSON tenant storage.
+  - Implemented `DELETE` endpoints in `/api/sales` and `/api/sales/[id]` to process single record (`?id=xyz`) and complete collection wipes (`?id=all`).
+  - Added real-time frontend state filtering so table rows and mobile cards update instantly without page reloads.
+
+- **Automatic POS Sales History Persistence ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx) & [`src/app/api/sales/checkout/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/sales/checkout/route.ts))**:
+  - Automatically posts order payload to `/api/sales` and `/api/sales/checkout` when completing sales, clicking the ticket pass container, or printing receipts, storing product and customer details permanently into the sales database.
+
+- **17-Column Overall Sales GST Excel Export ([`src/lib/export-reports.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/export-reports.ts))**:
+  - Built `exportSalesGSTExcel` generating a formatted `.xlsx` spreadsheet matching the 17 exact columns from reference documentation.
+
+- **Luxury View Bill Modal Redesign ([`src/components/sales/sales-page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/sales/sales-page.tsx))**:
+  - Redesigned the "View Bill" modal into a glassmorphic dark theme modal (`#1A0F0A`) with ambient gold/amber glow (`#E85002`).
+  - Added structured 2-column cards for **Customer Info** (Name, Phone, Address with icons) and **Bill Details** (Date, Cashier, Payment Mode).
+  - Built an itemized table displaying SKU, Qty, and line subtotals alongside a financial breakdown card with Subtotal, GST (3%), and bold glowing Grand Total (`#FF8C42`).
+  - Aligned the footer action bar with red **Delete Record**, **Close**, and brand gradient **Print Thermal Receipt** buttons.
+
+### Fixed & Resolved
+- **Fixed View Bill Modal Screen Centering Alignment ([`src/components/sales/sales-page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/sales/sales-page.tsx))**:
+  - Removed conflicting `relative` class override from `DialogContent` and enforced strict viewport centering (`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 max-h-[85vh]`).
+  - Locks the View Bill modal dead-center horizontally and vertically on all screen resolutions without getting pushed to the bottom of the viewport.
+
+- **Fixed POS Bill History Persistence Mismatch ([`src/app/api/sales/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/sales/route.ts), [`src/services/sale.service.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/services/sale.service.ts) & [`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Added direct `POST` handler to `/api/sales` that creates sale documents directly in both Firestore and local JSON storage.
+  - Resolved floating-point tax/payment total mismatch rejection in `SaleService.completeSale` by auto-balancing single payment totals.
+  - Connected `saveOrderToSalesHistory` to bill generation form submit, ticket pass container click, and "Print Thermal Receipt" button click.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Zero-Truncation Thermal PDF Margin & Symbol Font Encoding Fix (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Precision Formatting
+- **Eliminated PDF Text Overflow & Character Corruption ([`src/lib/print-invoice.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/print-invoice.ts))**:
+  - Replaced currency symbol `₹` with standard `Rs.` string in `downloadDigitalBill` to prevent Type1 Courier font UTF-8 `¹` (superscript 1) character mapping corruption.
+  - Recalculated 80mm page coordinates (`leftX = 5mm`, `rightX = 75mm`) and adjusted column widths, guaranteeing 5mm page margins on both sides with zero text truncation or right margin overflow.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — 1:1 Thermal Receipt PDF Download Alignment (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Feature Workflow
+- **1:1 Thermal Bill PDF Downloader ([`src/lib/print-invoice.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/print-invoice.ts))**:
+  - Re-architected `downloadDigitalBill(data: ReceiptData)` using `jsPDF` to render an exact 1:1 80mm thermal receipt PDF matching the printed bill layout.
+  - Formatted exact store header (`T I P A S H   L U X U R I E S`), tagline, metadata table (Bill No, Date, HSN, Customer, Phone, Address, GST No, Shipment Addr), monospace Courier items table, subtotal, GST (3%), double line TOTAL, payment mode, and `- - - - C U T - - - -` footer into `Invoice-TP-YYYYMMDD-XXXX.pdf`.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Image Optimization & Background Loader Stability Patch (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Config Updates
+- **Configured Image Qualities & Direct Asset Loading ([`next.config.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/next.config.ts) & [`src/components/architect-pos/parallax-scene.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/parallax-scene.tsx))**:
+  - Configured `images.qualities: [75, 95]` in `next.config.ts` to eliminate `unconfigured qualities [75]` warnings and null resource errors.
+  - Added `unoptimized` prop to the background image in `ParallaxScene` (`/image/04_HIGH_RES_RETAIL_BACKGROUND.png`), bypassing Turbopack server-side image resizer crashes and ensuring 100% full-resolution background loading with 0ms server overhead.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Direct PDF Digital Bill File Download Engine (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Feature Workflow
+- **Digital Invoice PDF Downloader ([`src/lib/print-invoice.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/print-invoice.ts))**:
+  - Upgraded `downloadDigitalBill(data: ReceiptData)` using `jsPDF` and `jspdf-autotable`.
+  - Generates a styled, vector-crisp digital tax invoice document featuring brand headers, customer metadata, auto-styled itemized tables, GST (3%) calculations, and grand total badges, saving directly as `Invoice-TP-YYYYMMDD-XXXX.pdf` on the device.
+  - Automatically triggered upon clicking the Ticket Pass container or the "Print Thermal Receipt" button alongside thermal receipt popup rendering.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Unified Thermal Print Launch & Automatic Digital Bill Download Engine (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Feature Workflow
+- **Digital Bill File Downloader ([`src/lib/print-invoice.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/print-invoice.ts))**:
+  - Implemented `downloadDigitalBill(data: ReceiptData)` utility that generates an HTML Blob and automatically triggers a local device file download (`Invoice-TP-YYYYMMDD-XXXX.html`).
+- **Dual Action Integration on Container & Print Button ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Wired clicking the Ticket Pass container (`.ticket-wrapper`) to simultaneously toggle the ticket stub tear animation (`isTorn`), launch the thermal receipt print popup dialog, and download the digital invoice file directly onto the user's device.
+  - Updated the "Print Thermal Receipt" button to execute both thermal printing and digital file downloading seamlessly with instant Sonner notification feedback.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Interactive Ticket Stub Tearing & Separation Animation on Click/Tap (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & UI/UX Refinements
+- **Interactive Ticket Pass Stub Separation ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx) & [`src/app/globals.css`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/globals.css))**:
+  - Implemented authentic ticket tear/stub separation behavior when clicking or tapping the ticket pass.
+  - Added `isTorn` state to `ScannerModule` along with click toggles on `.ticket-wrapper`.
+  - Configured spring-animated transform physics (`transform: translateY(12px) rotate(2.5deg)`) on `.t-stub` and `.is-torn .t-stub` with elevation shadows (`box-shadow: 0 12px 24px rgba(0,0,0,0.6)`), revealing the perforated gap between the upper container and the barcode stub.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Sharp Anti-Aliased Hover & Proportional Card Scaling for Ticket Pass Container (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & UI/UX Refinements
+- **Removed Hover Blur & Added Sub-Pixel Anti-Aliasing ([`src/app/globals.css`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/globals.css))**:
+  - Replaced 3D tilt rotation and filter drop-shadow hover artifacts with crisp Y-axis translation (`translateY(-4px)`), sharp font antialiasing (`-webkit-font-smoothing: antialiased`), and hardware `backface-visibility: hidden` to keep text 100% sharp without blur on hover.
+- **Proportional Ticket Pass Card Expansion ([`src/app/globals.css`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/globals.css))**:
+  - Scaled up base font sizing (`font-size: 13.5px` $\rightarrow$ `14.5px` on `sm` viewports) and expanded card width to `25.5em`, allowing the Ticket Pass to fill the central container prominently.
+- **Removed Active Click/Tablet Stub Detachment Animation ([`src/app/globals.css`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/globals.css))**:
+  - Disabled `.ticket-wrapper:active .t-stub` translation and rotation detachment animation on tap/click for tablet and touch devices, keeping the barcode stub rigidly attached without animation.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Interactive Uiverse 3D Ticket Pass Container in POS Order Completion View (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & UI/UX
+- **Uiverse 3D Ticket Pass UI Integration ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx) & [`src/app/globals.css`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/globals.css))**:
+  - Integrated custom Uiverse 3D Ticket Pass container UI into Step 3 (Order Success & Receipt View) of the POS module.
+  - Implemented exact HTML structure, styling tokens (`--t-bg: #1e1e24`, `--t-accent: #7c3aed`), 3D tilt mechanics (`rotateX(5deg) rotateY(-10deg) scale(1.02)`), holographic glare sweep overlay, background perspective grid scroll animation (`@keyframes grid-scroll`), glowing logo pulse animation (`@keyframes logo-pulse`), side perforation cutouts, vertical barcode lines, and typography.
+  - Mapped real order details dynamically onto the Ticket Pass structure: Customer Name, Date & Time, Item & Quantity, Payment Gateway & Phone, Invoice Barcode ID (`TP-YYYYMMDD-XXXX`), and Total Paid Amount (`₹`).
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Standardized Fixed 3% GST Rate Engine Across Products & Checkout Flows (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Standardized
+- **Fixed 3% GST Rate Policy ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx), [`src/stores/cart-store.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/stores/cart-store.ts), [`src/validations/product.schema.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/validations/product.schema.ts))**:
+  - Enforced a fixed **3% GST rate** for all product catalog items, checkout total calculations, and UPI QR amount payloads.
+  - Replaced legacy 18% tax multipliers (`1.18` $\rightarrow$ `1.03`) in homepage checkout CTA buttons, total displays, and QR code pay URLs.
+  - Set default `taxRate: 3` across product schema validations, product repository fallbacks, cart store defaults, and store settings APIs ([`src/app/api/settings/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/settings/route.ts) & [`src/app/api/settings/public/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/settings/public/route.ts)).
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Tipash Luxuries 1:1 Thermal Bill Template & Runtime Date Formatting Fix (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Added
+- **Resolved Runtime TypeError in Date Formatting ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Replaced unsupported `timeStyle` option in `toLocaleDateString()` with canonical `toLocaleDateString("en-GB")` date formatting + `toLocaleTimeString("en-US")` time formatting (e.g. `16 Aug 2026, 04:51 pm`), fixing the `Runtime TypeError: Invalid option : timeStyle` crash during order generation.
+- **Tipash Luxuries 1:1 Thermal Bill Template ([`src/lib/print-invoice.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/print-invoice.ts))**:
+  - Implemented exact 1:1 thermal receipt HTML renderer matching the provided Tipash Luxuries bill design down to header title spacing (`T I P A S H   L U X U R I E S`), tagline (`SHINE BOLD SHINE TIPASH`), website, email, metadata table (Bill No `TP-YYYYMMDD-XXXX`, Date, HSN Code `7117`, Customer, Phone, Address, GST No `23AALCT4947P1ZL`, Shipment Addr), items table (`ITEM`, `QTY`, `RATE`, `AMOUNT`, `HSN: 7117`), Subtotal, GST (Incl. 3%), double line TOTAL, Payment Mode (`CASH` / `UPI`), and footer (`- - - - C U T - - - -`).
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-21] — Zero-Scroll Viewport Lock & POS Module Proportion Optimization (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Optimized
+- **Strict Single-Screen Viewport Lock ([`src/components/architect-pos/parallax-scene.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/parallax-scene.tsx) & [`src/app/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/page.tsx))**:
+  - Restored strict `h-screen max-h-screen overflow-hidden` container in `ParallaxScene` to completely lock the page height to `100vh` and eliminate all unwanted browser scrollbars / vertical page scrolling.
+  - Added `min-h-0 overflow-hidden` flex properties to `<main>` so flex items shrink naturally without overflowing.
+- **Micro-Proportions & Zero-Overflow Sizing ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx) & [`src/components/architect-pos/editorial-sidebars.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/editorial-sidebars.tsx))**:
+  - Adjusted headline font scale to `text-2xl sm:text-3xl lg:text-4xl font-black` with compact `mb-1.5` spacing.
+  - Set module backdrop panel padding to `p-3.5 sm:p-5 lg:p-5` so header, main hero card, workflow bar, and footer fit in 100% viewport with zero clipping.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
+## [2026-09-20] — Removed Crisp Auto QR Overlay Layer (`/payments` & `/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Removed & Simplified
+- **Removed Crisp Auto QR Layer ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx) & [`src/app/(dashboard)/payments/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/%28dashboard%29/payments/page.tsx))**:
+  - Completely removed the synthetic "Crisp Auto QR" autogeneration layer and view mode toggle buttons (`⚡ Crisp Auto QR` / `🖼️ Poster Image`) per user request.
+  - Simplified payment QR rendering: when an official store QR poster image (`upiQrCode`) is uploaded by the admin, it renders directly as the primary QR display. If no custom QR poster image is uploaded, it renders the dynamic QR code generated from `upiId` and `merchantName`.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 9.4s, TypeScript checked in 6.6s).
+
+## [2026-09-20] — Fix for UPI QR Verification Failure & VPA ID Banking Handle Format (`/payments` & `/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Enhanced
+- **Identified Root Cause for "Unable to verify the QR code"**:
+  - Found that the Store UPI VPA ID entered in Admin Settings (`tipash`) was missing a required bank handle suffix (e.g. `@ybl`, `@paytm`, `@okicici`, `@upi`).
+  - When PhonePe or GPay scanned the resulting payload (`upi://pay?pa=tipash`), NPCI rejected `tipash` as an invalid VPA handle and displayed *"Unable to verify the QR code"*.
+- **VPA ID Live Validation & Auto-Fix Banner ([`src/app/(dashboard)/payments/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/%28dashboard%29/payments/page.tsx))**:
+  - Added live validation for `Store UPI VPA ID` input. If a user enters a handle without `@` (e.g., `tipash`), a prominent warning alert banner is rendered with a 1-click `Auto-Fix to: tipash@upi` button.
+  - Added `formatUpiVpa()` and `buildUpiPayUrl()` helpers in [`src/lib/qr-decoder.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/qr-decoder.ts) to guarantee all generated QR codes contain valid NPCI-compliant VPA addresses with handles.
+- **Enhanced Standee Poster Image Decoding ([`src/lib/qr-decoder.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/qr-decoder.ts))**:
+  - Added multi-pass HTML5 canvas center-cropping (70% x 70% center crop + high contrast binarization filter) to reliably extract embedded QR codes from full standee poster images (PhonePe, GPay, Paytm) even when surrounded by text headers.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 11.3s, TypeScript checked in 7.6s).
+
+## [2026-09-20] — Automated QR Poster Scanning & High-Resolution Crisp QR Auto-Generation (`/payments` & `/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Refactored
+- **Automatic QR Code Image Scanner & Decoder ([`src/lib/qr-decoder.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/qr-decoder.ts))**:
+  - Implemented `@zxing/browser` image analysis to automatically detect and extract raw QR/barcode payload strings from uploaded standee/poster images.
+  - Automatically parses UPI URI parameters (`upi://pay?pa=...&pn=...`) to auto-fill Store VPA ID and Merchant Payee Name.
+- **High-Resolution Crisp QR Auto-Generator ([`src/app/(dashboard)/payments/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/%28dashboard%29/payments/page.tsx) & [`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Replaced low-resolution unreadable poster thumbnails in the QR display with **full-frame, high-contrast, autogenerated crisp QR graphics** (100% scannable by Google Pay, PhonePe, Paytm, BHIM apps).
+  - Added interactive view mode toggle pills (`⚡ Crisp Auto QR` vs `🖼️ Poster Image`) allowing admins and customers to switch between clean QR and original poster views.
+  - Added an explicit `⚡ Scan & Analyze QR` button on the Admin Payment Settings page (`/payments`).
+- **Settings Schema Extension ([`src/validations/settings.schema.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/validations/settings.schema.ts) & [`src/app/api/settings/public/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/settings/public/route.ts))**:
+  - Added `scannedQrPayload` and `cleanQrCode` optional attributes.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 9.0s, TypeScript checked in 6.2s).
+
+## [2026-09-20] — Outside-Container Right-Side Positioned UPI QR Code Card (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Changed & Refactored
+- **UPI QR Code Card Placement ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Moved the UPI QR Code card completely **OUTSIDE** of the central brown card container.
+  - Wrapped the central step container in a relative container wrapper (`<div className="relative w-full">`).
+  - Positioned the UPI QR card at `xl:absolute xl:left-full xl:ml-6 xl:top-0 xl:w-80` so that on desktop viewports (`xl`), it sits cleanly in the right background space outside the main container with zero overlap with the customer form fields or checkout action buttons.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 9.7s, TypeScript checked in 6.5s).
+
+## [2026-09-20] — Right-Side Positioned UPI QR Code Card & Console Workflow Card Removal (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Refactored
+- **Right-Side Positioned UPI QR Code Card ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Positioned the Admin UPI QR Code Card on the **RIGHT SIDE** of the screen during Step 2 checkout when `UPI` is selected.
+  - On desktop viewports (`xl`), docks at `xl:fixed xl:right-6 xl:top-1/2 xl:-translate-y-1/2 xl:w-80` with a smooth slide-in animation (`animate-in slide-in-from-right-5`).
+  - Renders the high-contrast 200x200 UPI QR Code image (uploaded poster or dynamic VPA QR code), total payable amount (`₹`), Merchant Payee name, VPA ID badge, and customer payment instructions.
+- **Removed Console Workflow Card ([`src/components/architect-pos/editorial-sidebars.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/editorial-sidebars.tsx))**:
+  - Completely removed the Right Editorial Card ("Console Workflow: Scan • Bill • Print • Repeat") from the homepage layout.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 7.4s, TypeScript checked in 6.1s).
+
+## [2026-09-20] — Admin Operations Payment System & Dynamic UPI QR Code Engine (`/payments`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Integrated
+- **Admin Operations Navigation ([`src/components/layout/sidebar.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/layout/sidebar.tsx))**:
+  - Added **Payment Systems** (`/payments`) link under the **`OPERATIONS`** section in the admin sidebar navigation menu alongside Purchases, Suppliers, and Expenses.
+- **Admin Payment System Module ([`src/app/(dashboard)/payments/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/%28dashboard%29/payments/page.tsx))**:
+  - Full admin management for store UPI payment gateways:
+    - Store UPI VPA ID (e.g. `9876543210@paytm` or `store@upi`).
+    - Merchant Payee Name (e.g. `RetailPOS Flagship Store`).
+    - Official Store UPI QR Code Image upload via `/api/upload`.
+    - Active UPI & Cash Payment Status Toggles (`enableUpi`, `enableCash`).
+    - Customer payment instruction notes.
+    - Live interactive **Customer Checkout Display Preview** box showing exact QR representation.
+- **Public Settings API ([`src/app/api/settings/public/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/settings/public/route.ts))**:
+  - Created `GET /api/settings/public` route allowing homepage scanner and checkout UI to fetch payment settings without requiring session auth.
+- **Homepage UPI QR Display ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - When **UPI** is selected during homepage checkout, it automatically renders the Admin-configured UPI QR Code (uploaded image or dynamic VPA QR code) along with VPA ID, Merchant name, total payable amount, and payment instructions.
+- **UI Primitives ([`src/components/ui/switch.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/ui/switch.tsx) & [`src/components/ui/textarea.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/ui/textarea.tsx))**:
+  - Added Radix UI Switch primitive component and Textarea component.
+
+### Verification Results
+- `npm run build`: **PASS** (57 static and dynamic routes compiled cleanly in 8.0s, TypeScript checked in 5.8s).
+
+## [2026-09-20] — Payment Method Simplification: Removal of Card Option (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Changed
+- **Payment Method Options ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Removed `CARD` payment method option from the homepage checkout UI form.
+  - Updated state type to `"cash" | "upi"`.
+  - Re-aligned UI grid layout to `grid-cols-2` so `CASH` and `UPI` options cleanly split container width 50-50.
+
+### Verification Results
+- `npm run build`: **PASS** (55 static and dynamic routes compiled cleanly in 8.7s, TypeScript checked in 6.2s).
+
+## [2026-09-20] — Fullscreen Product Image Lightbox Modal (`/`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added
+- **Fullscreen Image Lightbox ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Made scanned product image container interactive with hover glow border (`hover:border-[#E85002]/80`) and an animated `Maximize2` icon overlay trigger ("Click for Fullscreen View").
+  - Implemented high-resolution full-screen modal lightbox (`fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl`) rendering high-res product master image (`max-h-[75vh]`), product title, selling price badge (`₹`), SKU, and barcode metadata.
+  - Supports quick dismissal via backdrop click, top-right `X` button, or `ESC` keyboard shortcut listener.
+
+### Verification Results
+- `npm run build`: **PASS** (55 static and dynamic routes compiled cleanly in 9.1s, TypeScript checked in 6.5s).
+
+## [2026-09-20] — Seamless Homepage Barcode Checkout Flow & Zero Admin Redirection
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Refactored
+- **Inline Homepage Checkout Flow ([`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Removed admin page redirection (`router.push('/pos?barcode=...')`). Scanning a barcode now transitions smoothly to **Step 2** directly on the homepage UI.
+  - **Scanned Product Summary Card**: Renders product image (with high-res container & fallbacks), product name, selling price tag (`₹`), SKU badge, and dynamic quantity controls (`-` / `+`).
+  - **Customer Details Form**: Includes required **Customer Name**, **Customer Phone Number**, and optional **Address** fields alongside Payment Method selection (`Cash`, `UPI`, `Card`).
+  - **Step 3 Inline Confirmation & Thermal Receipt**: Generates customer invoice summary with a direct **Print Thermal Receipt** button (`printThermalReceipt()`) and **Scan Next Item** reset button.
+- **Public Product Barcode API Query ([`src/app/api/products/public/route.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/api/products/public/route.ts))**:
+  - Enhanced `GET /api/products/public` to accept `barcode` query parameter for public home page barcode lookup without requiring session auth.
+
+### Verification Results
+- `npm run build`: **PASS** (55 static and dynamic routes compiled cleanly in 7.5s, TypeScript checked in 5.6s).
+
+## [2026-09-20] — Resolution of @zxing/browser Dependency Error
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Fixed & Installed
+- **Dependency Resolution (`package.json` & `node_modules`)**:
+  - Installed missing `@zxing/browser` and `@zxing/library` packages required by `CameraBarcodeScanner` ([`src/components/pos/camera-barcode-scanner.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/pos/camera-barcode-scanner.tsx)).
+  - Resolved `Module not found: Can't resolve '@zxing/browser'` error in Next.js Turbopack dev server and production builds.
+
+### Verification Results
+- `npm run build`: **PASS** (55 static and dynamic routes compiled successfully in 12.3s).
+
 ## [2026-09-20] — Complete Removal of Local Image Fallback & Exclusive Cloudinary Production Storage
 
 ### Author

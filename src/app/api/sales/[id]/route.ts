@@ -24,3 +24,20 @@ export async function GET(
     return apiError(e instanceof Error ? e.message : "Unauthorized", 401);
   }
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await requirePermission("sales.manage");
+    const tenantId = session.user.tenantId || "default";
+
+    const { id } = await params;
+    await repo.delete(id, tenantId);
+    return apiSuccess({ deleted: true, id });
+  } catch (e) {
+    return apiError(e instanceof Error ? e.message : "Unauthorized", 401);
+  }
+}
+

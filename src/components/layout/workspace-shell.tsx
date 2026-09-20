@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Store, LogOut, LayoutDashboard, Wifi, WifiOff, User as UserIcon } from "lucide-react";
+import { LogOut, LayoutDashboard, Wifi, WifiOff, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission } from "@/lib/permissions";
@@ -58,9 +58,6 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
           {/* Brand & Store Name */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E85002] to-[#C10801] text-white shadow-md shadow-[#E85002]/30">
-              <Store className="h-5 w-5" />
-            </div>
             <div className="truncate">
               <span className="block truncate text-sm font-bold tracking-tight text-white sm:text-base">
                 RetailPOS Workspace

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Upload, Loader2, Barcode, Sparkles, RotateCw, RotateCcw } from "lucide-react";
+import { Upload, Loader2, Barcode, RotateCw, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -80,7 +80,7 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
       costPrice: 0,
       sellingPrice: 0,
       stock: 0,
-      taxRate: 0,
+      taxRate: 3,
       lowStockThreshold: 5,
       unit: "pcs",
     },
@@ -133,7 +133,7 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
           costPrice: 0,
           sellingPrice: 0,
           stock: 10,
-          taxRate: 18,
+          taxRate: 3,
           lowStockThreshold: 5,
           unit: "pcs",
         });
@@ -361,7 +361,7 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
                   onClick={generateNewSKU}
                   className="text-xs text-[#E85002] hover:text-[#E85002]/80 font-medium inline-flex items-center gap-1"
                 >
-                  <Sparkles className="h-3 w-3" /> Auto
+                  Auto
                 </button>
               </div>
               <Input

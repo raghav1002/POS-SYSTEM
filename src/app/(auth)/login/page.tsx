@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Store, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,9 +147,6 @@ export default function LoginPage() {
 
       <Card className="relative z-10 w-full max-w-md border-zinc-800/80 bg-zinc-950/90 p-2 shadow-2xl shadow-black/90 backdrop-blur-xl sm:rounded-2xl">
         <CardHeader className="space-y-3 text-center pt-6">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E85002] to-[#C10801] text-white shadow-lg shadow-[#E85002]/40">
-            <Store className="h-7 w-7" />
-          </div>
           <div className="space-y-1">
             <CardTitle className="text-3xl font-extrabold tracking-tight text-white">
               RetailPOS

@@ -40,7 +40,7 @@ export function ParallaxScene({ children }: ParallaxSceneProps) {
           alt="Retail Store Scene"
           fill
           priority
-          quality={95}
+          unoptimized
           className="object-cover object-center filter brightness-[0.92] contrast-[1.05]"
         />
         {/* Ambient Warm Vignette & Center Soft Blur Overlay */}

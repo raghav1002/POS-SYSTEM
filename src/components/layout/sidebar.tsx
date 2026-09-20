@@ -19,6 +19,7 @@ import {
   Settings,
   Store,
   Shield,
+  QrCode,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -71,6 +72,7 @@ const navSections: NavSection[] = [
       { href: "/purchases", label: "Purchases", icon: ShoppingBag, roles: ["admin", "supervisor", "manager"] },
       { href: "/suppliers", label: "Suppliers", icon: Truck, roles: ["admin", "supervisor", "manager"] },
       { href: "/expenses", label: "Expenses", icon: Wallet, roles: ["admin", "supervisor", "manager"] },
+      { href: "/payments", label: "Payment Systems", icon: QrCode, roles: ["admin", "supervisor", "manager"] },
     ],
   },
   {
@@ -101,9 +103,6 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Brand Header */}
       <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-zinc-800/80 bg-zinc-950/80">
         <Link href="/dashboard" className="flex items-center gap-2.5 font-bold tracking-tight text-white group min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E85002] to-[#C10801] text-white shadow-md shadow-[#E85002]/30 group-hover:scale-105 transition-transform">
-            <Store className="h-4 w-4" />
-          </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-extrabold leading-none tracking-wide text-white truncate">RetailPOS</span>
             <span className="text-[9px] font-semibold text-[#E85002] tracking-wider uppercase truncate">Enterprise 2026</span>

@@ -1,6 +1,6 @@
 import { PublicHeader } from "@/components/public/public-header";
 import { PublicFooter } from "@/components/public/public-footer";
-import { Store, ShieldCheck, Zap, Award } from "lucide-react";
+import { ShieldCheck, Zap, Award } from "lucide-react";
 
 export default function AboutPage() {
   return (
@@ -10,9 +10,6 @@ export default function AboutPage() {
       <main className="flex-1 py-16">
         <div className="mx-auto max-w-4xl px-4 space-y-12 text-center">
           <div className="space-y-3">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E85002]/10 border border-[#E85002]/20 text-[#E85002]">
-              <Store className="h-7 w-7" />
-            </div>
             <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">About RetailPOS Store</h1>
             <p className="text-sm text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               We operate an enterprise retail store equipped with real-time point-of-sale inventory tracking, instant barcode checkout, and digital receipts.

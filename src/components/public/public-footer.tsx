@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store, ShieldCheck, Truck, Headphones, Clock } from "lucide-react";
+import { ShieldCheck, Truck, Headphones, Clock } from "lucide-react";
 
 export function PublicFooter() {
   return (
@@ -8,9 +8,6 @@ export function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="space-y-3">
             <div className="flex items-center gap-2 font-bold text-white text-base">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E85002] text-white">
-                <Store className="h-4 w-4" />
-              </div>
               <span>RetailPOS</span>
             </div>
             <p className="text-zinc-400 text-xs leading-relaxed">

@@ -209,5 +209,6 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/permissions": "roles.view",
   "/reports": "reports.view",
   "/settings": "settings.manage",
+  "/payments": "settings.manage",
   "/branches": "branches.manage",
 };

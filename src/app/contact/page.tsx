@@ -1,6 +1,6 @@
 import { PublicHeader } from "@/components/public/public-header";
 import { PublicFooter } from "@/components/public/public-footer";
-import { MapPin, Phone, Mail, Clock, Store } from "lucide-react";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export default function ContactPage() {
   return (
@@ -19,7 +19,7 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-8 rounded-2xl border border-zinc-800 bg-zinc-950 space-y-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Store className="h-5 w-5 text-[#E85002]" /> Retail Counter Info
+                Retail Counter Info
               </h2>
 
               <div className="space-y-4 text-xs font-medium text-zinc-300">

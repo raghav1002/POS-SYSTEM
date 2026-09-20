@@ -1,6 +1,6 @@
 import { adminDb } from "@/lib/firebase/admin";
 import type { PaginationParams, PaginatedResult } from "@/types";
-import { readLocalCollection, setLocalDoc, getLocalDoc } from "@/lib/tenant-store";
+import { readLocalCollection, setLocalDoc, getLocalDoc, deleteLocalDoc } from "@/lib/tenant-store";
 
 export interface ISaleItem {
   productId: string;
@@ -33,6 +33,10 @@ export interface ISale {
   payments: ISalePayment[];
   customerId?: string;
   customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  customerEmail?: string;
+  customerState?: string;
   cashierId: string;
   cashierName?: string;
   branchId?: string;
@@ -65,6 +69,10 @@ export class SaleRepository {
       payments: data.payments ?? [],
       customerId: data.customerId,
       customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerAddress: data.customerAddress,
+      customerEmail: data.customerEmail,
+      customerState: data.customerState,
       cashierId: data.cashierId ?? "",
       cashierName: data.cashierName,
       branchId: data.branchId,
@@ -186,6 +194,10 @@ export class SaleRepository {
       payments: data.payments ?? [],
       customerId: data.customerId,
       customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerAddress: data.customerAddress,
+      customerEmail: data.customerEmail,
+      customerState: data.customerState,
       cashierId: data.cashierId ?? "",
       cashierName: data.cashierName,
       branchId: data.branchId,
@@ -207,6 +219,32 @@ export class SaleRepository {
     }
 
     return newSale;
+  }
+
+  async delete(id: string, tenantId = "default"): Promise<boolean> {
+    deleteLocalDoc(tenantId, "sales", id);
+    try {
+      await this.getCollection(tenantId).doc(id).delete();
+    } catch (dbErr) {
+      console.warn("[SaleRepo] Firestore delete deferred:", dbErr);
+    }
+    return true;
+  }
+
+  async deleteAll(tenantId = "default"): Promise<boolean> {
+    const items = readLocalCollection<ISale>(tenantId, "sales");
+    for (const item of items) {
+      deleteLocalDoc(tenantId, "sales", item.id || item._id);
+    }
+    try {
+      const snap = await this.getCollection(tenantId).get();
+      const batch = adminDb.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    } catch (dbErr) {
+      console.warn("[SaleRepo] Firestore deleteAll deferred:", dbErr);
+    }
+    return true;
   }
 
   async getRevenueStats(from?: Date | string, to?: Date | string, branchId?: string, tenantId = "default") {

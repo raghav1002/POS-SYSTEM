@@ -420,7 +420,7 @@ export function ScannerModule() {
 
       {/* 2. CENTRAL STEP CONTAINER */}
       <div className="relative w-full">
-        <div className="w-full rounded-3xl border border-[#723C1A]/20 bg-[#2C1810]/90 backdrop-blur-2xl p-3.5 sm:p-5 lg:p-5 shadow-2xl shadow-[#2C1810]/40 text-white relative overflow-hidden text-left">
+        <div className="w-full rounded-2xl sm:rounded-3xl border border-[#723C1A]/20 bg-[#2C1810]/90 backdrop-blur-2xl p-3 sm:p-5 lg:p-5 shadow-2xl shadow-[#2C1810]/40 text-white relative overflow-visible text-left">
           {/* Ambient Top Glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#E85002]/20 rounded-full blur-3xl pointer-events-none" />
 

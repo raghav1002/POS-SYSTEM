@@ -26,11 +26,11 @@ export function ParallaxScene({ children }: ParallaxSceneProps) {
   return (
     <div
       ref={sceneRef}
-      className="relative h-screen w-full max-h-screen overflow-hidden bg-[#FAF6EE] text-[#2C1810] flex flex-col justify-between font-sans selection:bg-[#723C1A] selection:text-white"
+      className="relative min-h-screen md:h-screen w-full md:max-h-screen overflow-y-auto md:overflow-hidden bg-[#FAF6EE] text-[#2C1810] flex flex-col justify-between font-sans selection:bg-[#723C1A] selection:text-white"
     >
       {/* LAYER 1: DEEP BACKGROUND RETAIL SCENE WITH SOFT PARALLAX */}
       <div
-        className="absolute inset-0 pointer-events-none z-0 transition-transform duration-300 ease-out scale-105"
+        className="fixed md:absolute inset-0 pointer-events-none z-0 transition-transform duration-300 ease-out scale-105"
         style={{
           transform: `translate3d(${mousePos.x * -12}px, ${mousePos.y * -12}px, 0) scale(1.05)`,
         }}
@@ -49,7 +49,7 @@ export function ParallaxScene({ children }: ParallaxSceneProps) {
       </div>
 
       {/* LAYER 2: INTERACTIVE CONTENT LAYER */}
-      <div className="relative z-10 flex-1 flex flex-col justify-between h-full">
+      <div className="relative z-10 flex-1 flex flex-col justify-between min-h-full">
         {children}
       </div>
     </div>

@@ -12,12 +12,12 @@ export default async function StorefrontHomePage() {
   return (
     <ParallaxScene>
       {/* 1. STICKY HEADER */}
-      <div className="shrink-0 relative z-50">
+      <div className="shrink-0 sticky top-0 z-50 bg-[#FAF6EE]/90 backdrop-blur-md">
         <POSHeader />
       </div>
 
       {/* 2. MAIN HERO SCANNER SECTION */}
-      <main className="flex-1 min-h-0 flex flex-col justify-center items-center px-4 py-1.5 lg:py-3 relative z-20 overflow-hidden">
+      <main className="flex-1 min-h-0 flex flex-col justify-start md:justify-center items-center px-3 sm:px-4 py-3 md:py-1.5 relative z-20 overflow-visible md:overflow-hidden w-full max-w-7xl mx-auto">
         {/* Left & Right Editorial Cards (xl breakpoint) */}
         <EditorialSidebars />
 
@@ -25,13 +25,13 @@ export default async function StorefrontHomePage() {
         <ScannerModule />
 
         {/* 3-Step Workflow Bar */}
-        <div className="mt-2 lg:mt-3 shrink-0 w-full">
+        <div className="mt-3 lg:mt-3 shrink-0 w-full pb-4 md:pb-0">
           <WorkflowIndicator />
         </div>
       </main>
 
       {/* 3. FOOTER */}
-      <footer className="shrink-0 border-t border-[#723C1A]/15 bg-[#FAF6EE]/90 backdrop-blur-md py-3 px-4 lg:px-8 relative z-50">
+      <footer className="shrink-0 border-t border-[#723C1A]/15 bg-[#FAF6EE]/95 backdrop-blur-md py-3.5 px-4 lg:px-8 relative z-50">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#5C4033]">
           <div className="flex items-center gap-4">
             <span className="font-bold text-[#2C1810]">

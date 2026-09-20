@@ -25,7 +25,9 @@
 - **Instant Mobile Camera Barcode Scanner ([`src/components/pos/camera-barcode-scanner.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/pos/camera-barcode-scanner.tsx))**:
   - Integrated native OS hardware-accelerated `BarcodeDetector` API for <15ms instant GPU barcode scanning on mobile devices.
   - Constrained ZXing fallback decoder exclusively to retail 1D/2D formats (`EAN-13`, `CODE-128`, `UPC-A`, `UPC-E`, `CODE-39`), cutting CPU decoding overhead by over 80%.
-  - Enabled continuous hardware autofocus (`focusMode: "continuous"`) and web audio/vibration feedback upon detection.
+- **Mobile UI Vertical Scrolling System ([`src/components/architect-pos/parallax-scene.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/parallax-scene.tsx), [`src/app/page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/app/page.tsx), [`src/components/architect-pos/scanner-module.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/architect-pos/scanner-module.tsx))**:
+  - Re-architected viewport flex bounds with `min-h-screen overflow-y-auto` on mobile devices to enable smooth, unclipped vertical scrolling.
+  - Set background parallax scene to `fixed md:absolute` so store visuals stay pinned while mobile users scroll through product details, customer forms, payment tabs, and checkout buttons.
 
 ### Fixed
 - **Printed Barcode Graphics Rendering ([`src/lib/barcode-generator.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/barcode-generator.tsx), [`src/components/barcodes/barcode-editor-modal.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/barcodes/barcode-editor-modal.tsx))**:

@@ -1,5 +1,42 @@
 [
   {
+    "_id": "TP-20260920-9846",
+    "id": "TP-20260920-9846",
+    "invoiceNumber": "TP-20260920-9846",
+    "items": [
+      {
+        "productId": "x6TXARERRgajRBY066ST",
+        "name": "Aniket Shinde",
+        "sku": "SKU-598882",
+        "price": 1212,
+        "quantity": 1,
+        "discount": 0,
+        "tax": 36.36,
+        "subtotal": 1212,
+        "barcode": "789913258844"
+      }
+    ],
+    "subtotal": 1212,
+    "discount": 0,
+    "tax": 36.36,
+    "total": 1248.36,
+    "payments": [
+      {
+        "method": "cash",
+        "amount": 1248.36
+      }
+    ],
+    "customerName": "Raghav Pawar",
+    "customerPhone": "09356976315",
+    "customerAddress": "nashik",
+    "customerEmail": "assist@tipashluxuries.com",
+    "customerState": "Maharashtra",
+    "cashierId": "",
+    "status": "completed",
+    "createdAt": "2026-09-20T20:45:26.785Z",
+    "updatedAt": "2026-09-20T20:45:27.938Z"
+  },
+  {
     "_id": "TP-20260920-6303",
     "id": "TP-20260920-6303",
     "invoiceNumber": "TP-20260920-6303",

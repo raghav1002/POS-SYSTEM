@@ -85,9 +85,13 @@ export class ProductRepository {
   }
 
   async findByBarcode(barcode: string, tenantId = "default"): Promise<IProduct | null> {
+    const cleanCode = (barcode || "").trim();
+    if (!cleanCode) return null;
+
     try {
-      const snap = await this.getCollection(tenantId)
-        .where("barcode", "==", barcode)
+      // 1. Direct barcode match
+      let snap = await this.getCollection(tenantId)
+        .where("barcode", "==", cleanCode)
         .where("isActive", "==", true)
         .limit(1)
         .get();
@@ -96,14 +100,39 @@ export class ProductRepository {
         return this.mapDoc(snap.docs[0]);
       }
 
-      // Check variants if not matched by main barcode
+      // 2. Direct SKU match
+      snap = await this.getCollection(tenantId)
+        .where("sku", "==", cleanCode)
+        .where("isActive", "==", true)
+        .limit(1)
+        .get();
+
+      if (!snap.empty) {
+        return this.mapDoc(snap.docs[0]);
+      }
+
+      // 3. Direct Firestore Doc ID match
+      const doc = await this.getCollection(tenantId).doc(cleanCode).get();
+      if (doc.exists) {
+        const mapped = this.mapDoc(doc);
+        if (mapped && mapped.isActive !== false) return mapped;
+      }
+
+      // 4. Case-insensitive / variants match across all active products
       const allActive = await this.getCollection(tenantId)
         .where("isActive", "==", true)
         .get();
 
-      for (const doc of allActive.docs) {
-        const p = this.mapDoc(doc);
-        if (p?.variants?.some((v) => v.barcode === barcode)) {
+      const qLower = cleanCode.toLowerCase();
+      for (const d of allActive.docs) {
+        const p = this.mapDoc(d);
+        if (!p || !p.isActive) continue;
+        if (
+          (p.barcode && p.barcode.toLowerCase() === qLower) ||
+          (p.sku && p.sku.toLowerCase() === qLower) ||
+          p._id.toLowerCase() === qLower ||
+          p.variants?.some((v) => (v.barcode && v.barcode.toLowerCase() === qLower) || (v.sku && v.sku.toLowerCase() === qLower))
+        ) {
           return p;
         }
       }
@@ -111,11 +140,30 @@ export class ProductRepository {
       console.warn("[ProductRepo] Firestore findByBarcode deferred:", dbErr);
     }
 
-    const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive);
+    // 5. Local tenant store fallback (for offline or local JSON store)
+    const qLower = cleanCode.toLowerCase();
+    const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive !== false);
+
     const found = localProducts.find(
-      (p) => p.barcode === barcode || p.variants?.some((v) => v.barcode === barcode)
+      (p) =>
+        (p.barcode && p.barcode.toLowerCase() === qLower) ||
+        (p.sku && p.sku.toLowerCase() === qLower) ||
+        (p._id && p._id.toLowerCase() === qLower) ||
+        (p.id && p.id.toLowerCase() === qLower) ||
+        p.variants?.some((v) => (v.barcode && v.barcode.toLowerCase() === qLower) || (v.sku && v.sku.toLowerCase() === qLower))
     );
-    return found ?? null;
+
+    if (found) return found;
+
+    // 6. Partial search fallback
+    const partial = localProducts.find(
+      (p) =>
+        (p.barcode && p.barcode.toLowerCase().includes(qLower)) ||
+        (p.sku && p.sku.toLowerCase().includes(qLower)) ||
+        p.name.toLowerCase().includes(qLower)
+    );
+
+    return partial ?? null;
   }
 
   async search(query: string, limit = 20, tenantId = "default"): Promise<IProduct[]> {

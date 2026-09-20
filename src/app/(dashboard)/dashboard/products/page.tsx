@@ -6,6 +6,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { ModulePage } from "@/components/shared/module-page";
 import { ProductFormDialog, type ProductRecord } from "@/components/products/product-form-dialog";
+import { BarcodeModal } from "@/components/products/barcode-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,14 @@ export default function AdminProductsPage() {
       return matchesSearch && matchesCat;
     });
   }, [data, search, selectedCategory]);
+
+  const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+  const [barcodeProduct, setBarcodeProduct] = useState<ProductRecord | null>(null);
+
+  const handleOpenBarcode = (product: ProductRecord) => {
+    setBarcodeProduct(product);
+    setBarcodeModalOpen(true);
+  };
 
   const handleEdit = (product: ProductRecord) => {
     setEditingProduct(product);
@@ -303,6 +312,15 @@ export default function AdminProductsPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                className="h-8 w-8 p-0 text-[#E85002] hover:text-[#FF6B1A] hover:bg-[#E85002]/10"
+                                onClick={() => handleOpenBarcode(p)}
+                                title="View & Edit Barcode"
+                              >
+                                <Barcode className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800"
                                 onClick={() => handleEdit(p)}
                                 title="Edit Product"
@@ -336,6 +354,13 @@ export default function AdminProductsPage() {
         onOpenChange={setDialogOpen}
         onSuccess={load}
         initialData={editingProduct}
+      />
+
+      <BarcodeModal
+        open={barcodeModalOpen}
+        onOpenChange={setBarcodeModalOpen}
+        product={barcodeProduct}
+        onSuccess={load}
       />
     </ModulePage>
   );

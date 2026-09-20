@@ -1,0 +1,359 @@
+ANTIGRAVITY FIX / RECREATION PROMPT
+====================================
+
+MISSION
+-------
+The current localhost screenshot is NOT the intended design. Do not merely animate the existing page.
+Rebuild the homepage composition to match the supplied master reference.
+
+REFERENCE PRIORITY
+------------------
+1. Use the supplied CLEAN MASTER REFERENCE as the visual source of truth.
+2. Use the CURRENT LOCALHOST SCREENSHOT only to identify implementation defects.
+3. Use the included high-resolution reference images/crops as supporting visual references.
+
+CRITICAL CURRENT PROBLEMS TO FIX
+--------------------------------
+A) The rendered page still looks like the older/previous UI instead of the intended reference.
+B) The background/parallax composition is too blurry and oversized.
+C) The background assets appear to have been scaled beyond their native quality.
+D) The current rendering can expose transparency/checkerboard artifacts.
+E) Decorative coffee beans/leaves overpower the content.
+F) The central hero has weak contrast because imagery sits directly behind text.
+G) The header, CTA, scanner panel and workflow are too small/rigid relative to the intended reference.
+H) The result feels like an old POS terminal instead of a premium immersive retail console.
+I) Functional UI text must be HTML/CSS, not baked into raster background imagery.
+J) Parallax must create depth without moving the functional UI aggressively.
+
+NON-NEGOTIABLE VISUAL TARGET
+----------------------------
+Recreate this composition:
+
+- warm premium retail/café environment
+- #F6F3E5 warm cream foundation
+- #723C1A primary brown
+- clean ARCHITECT POS header
+- large "READY TO BILL" hero
+- "Scan a product barcode to begin."
+- large central scanner/CTA module
+- large brown "SCAN BARCODE" action
+- left editorial message: "Good Products Brighter Days"
+- right editorial message: "Scan Bill Print Repeat"
+- right-side physical barcode scanner
+- right-side kraft package / retail box
+- subtle leaves + coffee-bean depth elements
+- three-step workflow: SCAN → CREATE BILL → PRINT
+- refined footer details
+- immersive but readable environment
+
+DO NOT
+------
+- preserve the old rigid terminal/card layout
+- use checkerboard transparency
+- use one giant flattened decorative image for everything
+- blur the background until the UI becomes muddy
+- place beans directly over the hero headline
+- let decorative objects cover the CTA
+- use fake image-baked UI text
+- create excessive glassmorphism
+- create neon cyberpunk effects
+- create dramatic camera movement
+- create a generic dashboard
+- add unrelated dashboard features
+
+COMPOSITION RULE
+----------------
+Rebuild the layout from scratch if necessary.
+
+The functional visual hierarchy must be:
+
+1. READY TO BILL
+2. SCAN BARCODE
+3. scanner frame / scanner visual
+4. supporting message
+5. workflow
+6. secondary editorial imagery
+
+The environment frames the UI; it does not replace it.
+
+BACKGROUND IMPLEMENTATION
+--------------------------
+Use separate layers:
+
+Layer 1: retail environment / wall / shelves
+Layer 2: counter surface / distant depth
+Layer 3: leaves / coffee beans / packaging
+Layer 4: near foreground leaves / bean particles
+Layer 5: functional UI
+
+All layers must be crisp enough for their rendered size.
+
+If a transparent asset is used, render it on top of a real background and NEVER expose an alpha checkerboard.
+
+Do not upscale tiny raster thumbnails to fill the viewport.
+
+Use the supplied high-resolution background reference where possible.
+
+PARALLAX
+--------
+Desktop:
+- far layer: 0.01–0.02 pointer movement
+- middle layer: 0.02–0.04
+- near layer: 0.04–0.07
+- UI: 0–0.01, mostly anchored
+
+Use transform-based motion.
+Do not animate top/left/width/height.
+Use requestAnimationFrame only when required and keep it lightweight.
+
+Tablet:
+reduce parallax.
+
+Mobile:
+very subtle or static background depth.
+
+Reduced motion:
+remove decorative parallax.
+
+IMAGE QUALITY
+-------------
+Do not use the previous 91x86, 129x86, 97x86, etc. thumbnail-like background assets as fullscreen imagery.
+
+Replace them with the high-resolution assets in this pack.
+
+Rule:
+Do not enlarge a low-resolution asset to fill a large viewport.
+
+Use:
+- appropriately sized WebP/PNG/JPG
+- correct aspect ratio
+- object-fit/object-position
+- responsive resolution strategy
+- lazy loading only for non-critical imagery
+
+Keep the primary hero/background scene visually sharp.
+
+TEXT VISIBILITY
+---------------
+ALL functional text must be real HTML/CSS.
+
+Never depend on text rendered inside a background image.
+
+Provide a local readable surface / contrast protection behind UI when necessary.
+
+"READY TO BILL" must remain crisp and high contrast.
+
+"SCAN BARCODE" must remain the most obvious action.
+
+SCANNER
+-------
+Primary:
+hardware barcode scanner.
+
+Optional:
+camera fallback.
+
+Do not initialize camera on page load.
+
+Both paths must converge on:
+onScanSuccess(barcode: string)
+
+Then:
+navigate("/bill", { state: { barcode } })
+
+HOMEPAGE STATES
+---------------
+Implement:
+
+1. Application loading
+2. Ready
+3. Starting scanner
+4. Hardware-ready scanning / active input
+5. Optional camera scanning
+6. Success
+7. Error
+8. Scanner unavailable
+
+Animations must be short, controlled and useful.
+
+BUTTON
+------
+SCAN BARCODE states:
+
+default
+hover
+pressed
+focus
+loading
+active
+success
+error
+disabled
+
+Use tiny lift/compression and controlled state transitions.
+
+Never use excessive bounce or page shake.
+
+LOADING
+-------
+Initial:
+"Preparing your counter…"
+
+Scanner:
+"Starting scanner…"
+
+Never add a long intro animation.
+
+MOTION
+------
+Motion principle:
+MOTION COMMUNICATES STATE; IT DOES NOT SHOW OFF.
+
+Use approximately:
+fast: 100–180ms
+standard: 180–260ms
+page: 250–400ms
+
+Prefer:
+transform
+opacity
+
+Avoid:
+layout-triggering animation
+heavy blur
+expensive shadow animation
+continuous unnecessary loops
+
+Stop background animation when inactive.
+
+SCOPE
+-----
+FULLY IMPLEMENT ONLY:
+/
+
+Do not fully design:
+ /bill
+ /print
+
+Only create minimal route placeholders if required for navigation testing.
+
+TECH STACK
+----------
+React
+TypeScript
+Vite
+React Router
+Tailwind CSS
+Lucide React
+Vitest
+React Testing Library
+
+Do not add unnecessary dependencies.
+
+COMPONENTS
+----------
+AppShell
+POSHeader
+ParallaxScene
+ParallaxLayer
+ScanHero
+ScannerVisual
+ScanButton
+FeatureHighlights
+WorkflowIndicator
+ScannerState
+HardwareBarcodeInput
+Optional CameraBarcodeScanner
+
+ITERATIVE VISUAL QA
+-------------------
+Do not stop after one implementation.
+
+ROUND 1:
+inspect codebase
+→ remove/replace old homepage composition
+→ implement target composition
+→ render
+
+ROUND 2:
+take a fresh screenshot
+→ compare against master reference region-by-region
+→ identify mismatches
+→ fix
+
+ROUND 3:
+compare:
+header
+hero
+scanner
+CTA
+left editorial
+right scanner
+workflow
+background
+footer
+spacing
+type scale
+image sharpness
+
+ROUND 4:
+test:
+mouse
+touch
+keyboard
+hardware scanner
+optional camera
+tablet
+mobile
+reduced motion
+low-power performance
+
+ROUND 5:
+remove:
+anything generic
+anything blurry
+anything over-animated
+anything unnecessary
+
+FINAL VISUAL QA
+---------------
+Verify:
+
+[ ] Current old UI is completely replaced by the intended homepage composition.
+[ ] No checkerboard/transparent canvas is visible.
+[ ] Background environment is crisp at the rendered size.
+[ ] Beans/leaves do not overpower the hero.
+[ ] Center content is readable.
+[ ] READY TO BILL is dominant.
+[ ] SCAN BARCODE is dominant interaction.
+[ ] Scanner is positioned correctly on the right.
+[ ] Workflow is clearly visible.
+[ ] Header matches the intended hierarchy.
+[ ] Functional text is HTML/CSS.
+[ ] Parallax layers have believable depth.
+[ ] Parallax does not move the UI aggressively.
+[ ] Mobile does not overflow.
+[ ] Reduced motion works.
+[ ] No console errors.
+[ ] No broken image paths.
+[ ] No duplicate scanner events.
+[ ] /bill navigation works after scan.
+[ ] Homepage remains the only fully implemented page.
+
+MOST IMPORTANT:
+----------------
+DO NOT ANIMATE THE OLD UI.
+
+REBUILD THE HOMEPAGE TO MATCH THE SUPPLIED MASTER REFERENCE.
+
+The supplied reference is the visual target.
+The current localhost screenshot is the defect report.
+
+Keep the final result:
+PREMIUM
+CLEAR
+SHARP
+IMMERSIVE
+FAST
+SCAN-FIRST
+PRODUCTION-READY

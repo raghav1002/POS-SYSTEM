@@ -186,19 +186,37 @@ export function PosScreen() {
 
   const handleBarcodeScan = useCallback(
     async (barcode: string) => {
+      const clean = (barcode || "").trim();
+      if (!clean) return;
+
       try {
-        const res = await fetch(`/api/products/barcode/${encodeURIComponent(barcode)}`);
+        const res = await fetch(`/api/products/barcode/${encodeURIComponent(clean)}`);
         const json = await res.json();
         if (json.success && json.data) {
           addProductToCart(json.data);
+          return;
+        }
+
+        // Fallback: check currently loaded products in memory by barcode, SKU, ID, or name
+        const qLower = clean.toLowerCase();
+        const localMatch = products.find(
+          (p) =>
+            (p.barcode && p.barcode.toLowerCase() === qLower) ||
+            (p.sku && p.sku.toLowerCase() === qLower) ||
+            p._id === clean ||
+            p.name.toLowerCase().includes(qLower)
+        );
+
+        if (localMatch) {
+          addProductToCart(localMatch);
         } else {
-          toast.error(`Barcode not found: ${barcode}`);
+          toast.error(`Barcode not found: ${clean}`);
         }
       } catch {
         toast.error("Failed to query barcode");
       }
     },
-    [addProductToCart]
+    [addProductToCart, products]
   );
 
   // Physical hardware barcode scanner listener

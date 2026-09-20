@@ -1,3 +1,41 @@
+## [2026-09-20] — Alphanumeric Barcode Button & Interactive Barcode Modal (`/dashboard/products`)
+
+### Author
+- Antigravity AI
+- Machine: ANIKET-PC
+- Environment: Local Development
+
+### Added
+- **Alphanumeric Barcode Engine (`src/lib/barcode-generator.tsx`)**:
+  - Implemented Code 128 vector SVG barcode generator component `<Code128Barcode />` supporting full alphanumeric characters (`A-Z`, `a-z`, `0-9`, `-`, `_`).
+  - Added `generateAlphanumericBarcode()` helper to generate clean, readable 8-character SKU-style barcodes (e.g. `TSH-8921`, `SNK-9042`).
+- **Product Barcode Action Button**:
+  - Added dedicated Barcode action button positioned strictly to the left of the Edit button in the Products Directory table (`src/app/(dashboard)/dashboard/products/page.tsx`).
+- **Interactive Barcode Management Modal (`src/components/products/barcode-modal.tsx`)**:
+  - Displays high-contrast SVG vector barcode render with live preview as the user types custom letters or numbers.
+  - Allows editing barcode values containing letters and numbers, auto-generating random alphanumeric codes, saving updates to the product catalog via `PUT /api/products/[id]`, and printing barcode labels.
+
+## [2026-09-20] — Integrated High-Res Retail Background Image & Homepage Glassmorphism UI Redesign
+
+### Author
+- Antigravity AI
+- Machine: ANIKET-PC
+- Environment: Local Development
+
+### Added
+- Implemented central hero scanner module (`src/components/architect-pos/scanner-module.tsx`) with "READY TO BILL" headline, animated laser viewfinder, hardware barcode listener, and large brown "SCAN BARCODE" action button over a blurred retail scene.
+- Added smooth mouse pointer parallax scene (`src/components/architect-pos/parallax-scene.tsx`), editorial sidebars ("Good Products Brighter Days" & "Scan Bill Print Repeat"), and 3-step workflow indicator (1. SCAN -> 2. CREATE BILL -> 3. PRINT).
+
+### Fixed
+- **Root Cause "Barcode not found" 404 Error**:
+  - `ProductRepository.findByBarcode()` previously only checked exact case-sensitive matches against the `barcode` field. Extended `findByBarcode` to perform multi-tier matching across `barcode`, `sku`, `_id`, and `variants` (with case-insensitive, whitespace trim, and local tenant-store fallback).
+  - Enhanced `/api/products/barcode/[code]` API endpoint with URL decoding and input sanitization.
+  - Enhanced `pos-screen.tsx` with fallback matching against currently loaded catalog memory to ensure instant checkout response.
+- Fixed runtime `FirebaseAppError: Service account object must contain a string "project_id" property` in `src/lib/firebase/admin.ts` by passing fallback values and both camelCase/snake_case properties to `cert()`.
+
+### Performance
+- High-res background image optimized using Next.js `<Image>` component with priority loading and low CLS layout handling.
+
 ## [2026-09-18] — Dedicated Employee / Cashier Mobile-First Workspace (`/workspace`)
 
 ### Author

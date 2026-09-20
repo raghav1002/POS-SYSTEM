@@ -20,7 +20,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
   const zxingControlsRef = useRef<IScannerControls | null>(null);
   
   const [manualCode, setManualCode] = useState("");
-  const [hasCamera, setHasCamera] = useState(true);
   const [cameraError, setCameraError] = useState("");
   const [scannerStatus, setScannerStatus] = useState<"initializing" | "ready" | "detected" | "error">("initializing");
   
@@ -87,7 +86,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
       window.location.hostname !== "localhost" &&
       window.location.hostname !== "127.0.0.1"
     ) {
-      setHasCamera(false);
       setScannerStatus("error");
       setCameraError(
         "Camera access requires HTTPS or localhost. If testing on mobile, access via your secure HTTPS domain or enter barcode manually below."
@@ -97,7 +95,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
 
     // 2. Browser API support check
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setHasCamera(false);
       setScannerStatus("error");
       setCameraError("Camera API is not supported on this browser.");
       return;
@@ -124,7 +121,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     }
 
     if (!stream) {
-      setHasCamera(false);
       setScannerStatus("error");
       const errName = lastError instanceof Error ? lastError.name : String(lastError);
       
@@ -141,7 +137,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     }
 
     streamRef.current = stream;
-    setHasCamera(true);
 
     // Wait for video element ref to be mounted in DOM
     let retries = 0;

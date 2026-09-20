@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export function EmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [search, setSearch] = useState("");
@@ -17,6 +19,9 @@ export function EmployeesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeRecord | null>(null);
 
   const loadEmployees = async (query = "") => {
     setIsLoading(true);
@@ -46,15 +51,20 @@ export function EmployeesPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (employee: EmployeeRecord) => {
-    const confirmed = window.confirm(`Delete employee "${employee.name}"?`);
-    if (!confirmed) return;
+  const handlePromptDelete = (employee: EmployeeRecord) => {
+    setEmployeeToDelete(employee);
+    setDeleteModalOpen(true);
+  };
 
-    const res = await fetch(`/api/employees/${employee._id}`, { method: "DELETE" });
+  const handleConfirmDelete = async () => {
+    if (!employeeToDelete) return;
+
+    const res = await fetch(`/api/employees/${employeeToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      setEmployees((current) => current.filter((item) => item._id !== employee._id));
+      setEmployees((current) => current.filter((item) => item._id !== employeeToDelete._id));
     }
+    setEmployeeToDelete(null);
   };
 
   return (
@@ -121,7 +131,7 @@ export function EmployeesPage() {
                         <Button type="button" variant="outline" size="sm" className="h-8 w-8 p-0 border-zinc-800 text-zinc-300 hover:bg-zinc-800" onClick={() => openEdit(employee)} aria-label="Edit employee">
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        <Button type="button" variant="destructive" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(employee)} aria-label="Delete employee">
+                        <Button type="button" variant="destructive" size="sm" className="h-8 w-8 p-0" onClick={() => handlePromptDelete(employee)} aria-label="Delete employee">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -166,7 +176,7 @@ export function EmployeesPage() {
                     <Edit3 className="mr-1.5 h-3.5 w-3.5" />
                     Edit
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handleDelete(employee)}>
+                  <Button type="button" variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handlePromptDelete(employee)}>
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                     Delete
                   </Button>
@@ -191,6 +201,20 @@ export function EmployeesPage() {
         onOpenChange={setDialogOpen}
         employee={selectedEmployee}
         onSuccess={() => loadEmployees(debouncedSearch)}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Employee"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{employeeToDelete ? `"${employeeToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Delete Employee"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

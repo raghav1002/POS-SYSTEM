@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const imageMetadataSchema = z.object({
+  url: z.string(),
+  path: z.string(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  format: z.string().optional(),
+  version: z.number().optional(),
+});
+
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string().optional(),
@@ -14,6 +23,8 @@ export const productSchema = z.object({
   lowStockThreshold: z.number().min(0),
   unit: z.string(),
   images: z.array(z.string()).optional(),
+  image: imageMetadataSchema.optional(),
+  thumbnail: imageMetadataSchema.optional(),
   branchId: z.string().optional(),
 });
 

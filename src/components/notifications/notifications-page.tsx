@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { ModulePage } from "@/components/shared/module-page";
 import { useDebounce } from "@/hooks/use-debounce";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 interface NotificationRow {
   _id: string;
   title: string;
@@ -33,6 +35,9 @@ export function NotificationsPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState<NotificationRow | null>(null);
 
   const loadNotifications = async (query = "") => {
     setIsLoading(true);
@@ -68,13 +73,19 @@ export function NotificationsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this notification?")) return;
-    const res = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+  const handlePromptDelete = (notification: NotificationRow) => {
+    setNotificationToDelete(notification);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!notificationToDelete) return;
+    const res = await fetch(`/api/notifications/${notificationToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      setNotifications((current) => current.filter((item) => item._id !== id));
+      setNotifications((current) => current.filter((item) => item._id !== notificationToDelete._id));
     }
+    setNotificationToDelete(null);
   };
 
   return (
@@ -137,7 +148,7 @@ export function NotificationsPage() {
                     >
                       {notification.isRead ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                     </Button>
-                    <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(notification._id)}>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => handlePromptDelete(notification)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </td>
@@ -156,6 +167,20 @@ export function NotificationsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Notification"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{notificationToDelete ? `"${notificationToDelete.title}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Delete Notification"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </ModulePage>
   );
 }

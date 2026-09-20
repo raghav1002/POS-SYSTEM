@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export function BranchesPage() {
   const [branches, setBranches] = useState<BranchRecord[]>([]);
   const [search, setSearch] = useState("");
@@ -17,6 +19,9 @@ export function BranchesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<BranchRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [branchToDelete, setBranchToDelete] = useState<BranchRecord | null>(null);
 
   const loadBranches = async (query = "") => {
     setIsLoading(true);
@@ -46,15 +51,20 @@ export function BranchesPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (branch: BranchRecord) => {
-    const confirmed = window.confirm(`Delete branch "${branch.name}"?`);
-    if (!confirmed) return;
+  const handlePromptDelete = (branch: BranchRecord) => {
+    setBranchToDelete(branch);
+    setDeleteModalOpen(true);
+  };
 
-    const res = await fetch(`/api/branches/${branch._id}`, { method: "DELETE" });
+  const handleConfirmDelete = async () => {
+    if (!branchToDelete) return;
+
+    const res = await fetch(`/api/branches/${branchToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      setBranches((current) => current.filter((item) => item._id !== branch._id));
+      setBranches((current) => current.filter((item) => item._id !== branchToDelete._id));
     }
+    setBranchToDelete(null);
   };
 
   return (
@@ -108,7 +118,7 @@ export function BranchesPage() {
                     <Button type="button" variant="outline" size="sm" onClick={() => openEdit(branch)}>
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(branch)}>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => handlePromptDelete(branch)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </td>
@@ -132,6 +142,20 @@ export function BranchesPage() {
         onOpenChange={setDialogOpen}
         branch={selectedBranch}
         onSuccess={() => loadBranches(debouncedSearch)}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Branch"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{branchToDelete ? `"${branchToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Delete Branch"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

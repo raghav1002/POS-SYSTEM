@@ -14,12 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<CustomerRecord | null>(null);
 
   const load = useCallback(() => {
     setIsLoading(true);
@@ -37,9 +42,14 @@ export default function CustomersPage() {
     return () => clearTimeout(t);
   }, [load]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deactivate this customer?")) return;
-    const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+  const handlePromptDelete = (customer: CustomerRecord) => {
+    setCustomerToDelete(customer);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!customerToDelete) return;
+    const res = await fetch(`/api/customers/${customerToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
       toast.success("Customer deactivated");
@@ -47,6 +57,7 @@ export default function CustomersPage() {
     } else {
       toast.error(json.error);
     }
+    setCustomerToDelete(null);
   };
 
   const openCreate = () => {
@@ -121,7 +132,7 @@ export default function CustomersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(c._id)}
+                          onClick={() => handlePromptDelete(c)}
                           aria-label="Deactivate customer"
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
@@ -168,10 +179,10 @@ export default function CustomersPage() {
                     variant="destructive"
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => handleDelete(c._id)}
+                    onClick={() => handlePromptDelete(c)}
                   >
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                    Delete
+                    Deactivate
                   </Button>
                 </div>
               </div>
@@ -191,6 +202,20 @@ export default function CustomersPage() {
         onOpenChange={setDialogOpen}
         customer={editing}
         onSuccess={load}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Deactivate Customer"
+        description={
+          <span>
+            Are you sure you want to deactivate <strong className="text-zinc-200">{customerToDelete ? `"${customerToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Deactivate Customer"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

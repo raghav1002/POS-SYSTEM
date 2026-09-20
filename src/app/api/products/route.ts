@@ -57,7 +57,9 @@ export async function POST(req: Request) {
         stock: data.stock,
         lowStockThreshold: data.lowStockThreshold,
         unit: data.unit,
-        images: data.images ?? [],
+        images: data.images ?? (data.image?.url ? [data.image.url] : []),
+        image: data.image,
+        thumbnail: data.thumbnail,
       },
       tenantId
     );

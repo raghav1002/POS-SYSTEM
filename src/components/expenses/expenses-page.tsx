@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 interface ApiExpenseRecord extends ExpenseRecord {
   createdBy?: { name?: string } | null;
 }
@@ -19,6 +21,9 @@ export function ExpensesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ApiExpenseRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<ApiExpenseRecord | null>(null);
 
   const fetchExpenses = useCallback(async (searchTerm = search) => {
     setIsLoading(true);
@@ -41,10 +46,15 @@ export function ExpensesPage() {
     return () => clearTimeout(timeout);
   }, [fetchExpenses, search]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this expense?")) return;
+  const handlePromptDelete = (expense: ApiExpenseRecord) => {
+    setExpenseToDelete(expense);
+    setDeleteModalOpen(true);
+  };
 
-    const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+  const handleConfirmDelete = async () => {
+    if (!expenseToDelete) return;
+
+    const res = await fetch(`/api/expenses/${expenseToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (!json.success) {
       toast.error(json.error ?? "Failed to delete expense");
@@ -52,6 +62,7 @@ export function ExpensesPage() {
     }
 
     toast.success("Expense deleted");
+    setExpenseToDelete(null);
     fetchExpenses(search);
   };
 
@@ -116,7 +127,7 @@ export function ExpensesPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(expense._id)}>
+                      <Button variant="ghost" size="icon" onClick={() => handlePromptDelete(expense)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -142,6 +153,20 @@ export function ExpensesPage() {
         onOpenChange={setDialogOpen}
         expense={editing}
         onSuccess={loadExpenses}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Expense"
+        description={
+          <span>
+            Are you sure you want to delete expense <strong className="text-zinc-200">{expenseToDelete ? `"${expenseToDelete.title}"` : ""}</strong> ({formatCurrency(expenseToDelete?.amount || 0)})?
+          </span>
+        }
+        confirmText="Delete Expense"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

@@ -1,7 +1,8 @@
-import { adminDb, adminStorage } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
+import { deleteFromCloudStorage } from "@/lib/storage/cloud-storage";
 import { FieldValue } from "firebase-admin/firestore";
 import type { PaginationParams, PaginatedResult } from "@/types";
-import { readLocalCollection, setLocalDoc, getLocalDoc } from "@/lib/tenant-store";
+import { setLocalDoc } from "@/lib/tenant-store";
 
 export interface IProductVariant {
   id?: string;
@@ -16,10 +17,10 @@ export interface IProductVariant {
 export interface ProductImageMetadata {
   url: string;
   path: string;
-  width: number;
-  height: number;
-  format: string;
-  version: number;
+  width?: number;
+  height?: number;
+  format?: string;
+  version?: number;
 }
 
 export interface IProduct {
@@ -88,165 +89,105 @@ export class ProductRepository {
   }
 
   async findById(id: string, tenantId = "default"): Promise<IProduct | null> {
-    try {
-      const doc = await this.getCollection(tenantId).doc(id).get();
-      if (doc.exists) return this.mapDoc(doc);
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore findById deferred:", dbErr);
-    }
-    return getLocalDoc<IProduct>(tenantId, "products", id);
+    const doc = await this.getCollection(tenantId).doc(id).get();
+    if (doc.exists) return this.mapDoc(doc);
+    return null;
   }
 
   async findByBarcode(barcode: string, tenantId = "default"): Promise<IProduct | null> {
     const cleanCode = (barcode || "").trim();
     if (!cleanCode) return null;
 
-    try {
-      // 1. Direct barcode match
-      let snap = await this.getCollection(tenantId)
-        .where("barcode", "==", cleanCode)
-        .where("isActive", "==", true)
-        .limit(1)
-        .get();
+    // 1. Direct barcode match
+    let snap = await this.getCollection(tenantId)
+      .where("barcode", "==", cleanCode)
+      .where("isActive", "==", true)
+      .limit(1)
+      .get();
 
-      if (!snap.empty) {
-        return this.mapDoc(snap.docs[0]);
-      }
-
-      // 2. Direct SKU match
-      snap = await this.getCollection(tenantId)
-        .where("sku", "==", cleanCode)
-        .where("isActive", "==", true)
-        .limit(1)
-        .get();
-
-      if (!snap.empty) {
-        return this.mapDoc(snap.docs[0]);
-      }
-
-      // 3. Direct Firestore Doc ID match
-      const doc = await this.getCollection(tenantId).doc(cleanCode).get();
-      if (doc.exists) {
-        const mapped = this.mapDoc(doc);
-        if (mapped && mapped.isActive !== false) return mapped;
-      }
-
-      // 4. Case-insensitive / variants match across all active products
-      const allActive = await this.getCollection(tenantId)
-        .where("isActive", "==", true)
-        .get();
-
-      const qLower = cleanCode.toLowerCase();
-      for (const d of allActive.docs) {
-        const p = this.mapDoc(d);
-        if (!p || !p.isActive) continue;
-        if (
-          (p.barcode && p.barcode.toLowerCase() === qLower) ||
-          (p.sku && p.sku.toLowerCase() === qLower) ||
-          p._id.toLowerCase() === qLower ||
-          p.variants?.some((v) => (v.barcode && v.barcode.toLowerCase() === qLower) || (v.sku && v.sku.toLowerCase() === qLower))
-        ) {
-          return p;
-        }
-      }
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore findByBarcode deferred:", dbErr);
+    if (!snap.empty) {
+      return this.mapDoc(snap.docs[0]);
     }
 
-    // 5. Local tenant store fallback (for offline or local JSON store)
-    const qLower = cleanCode.toLowerCase();
-    const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive !== false);
+    // 2. Direct SKU match
+    snap = await this.getCollection(tenantId)
+      .where("sku", "==", cleanCode)
+      .where("isActive", "==", true)
+      .limit(1)
+      .get();
 
-    const found = localProducts.find(
-      (p) =>
+    if (!snap.empty) {
+      return this.mapDoc(snap.docs[0]);
+    }
+
+    // 3. Direct Firestore Doc ID match
+    const doc = await this.getCollection(tenantId).doc(cleanCode).get();
+    if (doc.exists) {
+      const mapped = this.mapDoc(doc);
+      if (mapped && mapped.isActive !== false) return mapped;
+    }
+
+    // 4. Case-insensitive / variants match across all active products in Firestore
+    const allActive = await this.getCollection(tenantId)
+      .where("isActive", "==", true)
+      .get();
+
+    const qLower = cleanCode.toLowerCase();
+    for (const d of allActive.docs) {
+      const p = this.mapDoc(d);
+      if (!p || !p.isActive) continue;
+      if (
         (p.barcode && p.barcode.toLowerCase() === qLower) ||
         (p.sku && p.sku.toLowerCase() === qLower) ||
-        (p._id && p._id.toLowerCase() === qLower) ||
-        (p.id && p.id.toLowerCase() === qLower) ||
+        p._id.toLowerCase() === qLower ||
         p.variants?.some((v) => (v.barcode && v.barcode.toLowerCase() === qLower) || (v.sku && v.sku.toLowerCase() === qLower))
-    );
+      ) {
+        return p;
+      }
+    }
 
-    if (found) return found;
-
-    // 6. Partial search fallback
-    const partial = localProducts.find(
-      (p) =>
-        (p.barcode && p.barcode.toLowerCase().includes(qLower)) ||
-        (p.sku && p.sku.toLowerCase().includes(qLower)) ||
-        p.name.toLowerCase().includes(qLower)
-    );
-
-    return partial ?? null;
+    return null;
   }
 
   async findBySku(sku: string, tenantId = "default"): Promise<IProduct | null> {
     const cleanSku = (sku || "").trim();
     if (!cleanSku) return null;
 
-    try {
-      const snap = await this.getCollection(tenantId)
-        .where("sku", "==", cleanSku)
-        .where("isActive", "==", true)
-        .limit(1)
-        .get();
+    const snap = await this.getCollection(tenantId)
+      .where("sku", "==", cleanSku)
+      .where("isActive", "==", true)
+      .limit(1)
+      .get();
 
-      if (!snap.empty) {
-        return this.mapDoc(snap.docs[0]);
-      }
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore findBySku deferred:", dbErr);
+    if (!snap.empty) {
+      return this.mapDoc(snap.docs[0]);
     }
 
-    const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive !== false);
-    return localProducts.find((p) => p.sku && p.sku.toLowerCase() === cleanSku.toLowerCase()) ?? null;
+    return null;
   }
 
   async search(query: string, limit = 20, tenantId = "default"): Promise<IProduct[]> {
     const qLower = query.toLowerCase();
     const results: IProduct[] = [];
 
-    try {
-      const snap = await this.getCollection(tenantId).get();
-      for (const doc of snap.docs) {
-        const p = this.mapDoc(doc);
-        if (!p || !p.isActive) continue;
+    const snap = await this.getCollection(tenantId).get();
+    for (const doc of snap.docs) {
+      const p = this.mapDoc(doc);
+      if (!p || !p.isActive) continue;
 
-        if (
-          p.name.toLowerCase().includes(qLower) ||
-          p.sku.toLowerCase().includes(qLower) ||
-          (p.barcode && p.barcode.toLowerCase().includes(qLower)) ||
-          p.variants?.some(
-            (v) =>
-              v.name.toLowerCase().includes(qLower) ||
-              v.sku.toLowerCase().includes(qLower) ||
-              (v.barcode && v.barcode.toLowerCase().includes(qLower))
-          )
-        ) {
-          results.push(p);
-          if (results.length >= limit) break;
-        }
-      }
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore search deferred:", dbErr);
-    }
-
-    if (results.length === 0) {
-      const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive);
-      for (const p of localProducts) {
-        if (
-          p.name.toLowerCase().includes(qLower) ||
-          p.sku.toLowerCase().includes(qLower) ||
-          (p.barcode && p.barcode.toLowerCase().includes(qLower)) ||
-          p.variants?.some(
-            (v) =>
-              v.name.toLowerCase().includes(qLower) ||
-              v.sku.toLowerCase().includes(qLower) ||
-              (v.barcode && v.barcode.toLowerCase().includes(qLower))
-          )
-        ) {
-          results.push(p);
-          if (results.length >= limit) break;
-        }
+      if (
+        p.name.toLowerCase().includes(qLower) ||
+        p.sku.toLowerCase().includes(qLower) ||
+        (p.barcode && p.barcode.toLowerCase().includes(qLower)) ||
+        p.variants?.some(
+          (v) =>
+            v.name.toLowerCase().includes(qLower) ||
+            v.sku.toLowerCase().includes(qLower) ||
+            (v.barcode && v.barcode.toLowerCase().includes(qLower))
+        )
+      ) {
+        results.push(p);
+        if (results.length >= limit) break;
       }
     }
 
@@ -262,20 +203,12 @@ export class ProductRepository {
 
     let all: IProduct[] = [];
 
-    try {
-      const snap = await this.getCollection(tenantId).get();
-      for (const doc of snap.docs) {
-        const p = this.mapDoc(doc);
-        if (p && p.isActive) {
-          all.push(p);
-        }
+    const snap = await this.getCollection(tenantId).get();
+    for (const doc of snap.docs) {
+      const p = this.mapDoc(doc);
+      if (p && p.isActive) {
+        all.push(p);
       }
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore paginate deferred:", dbErr);
-    }
-
-    if (all.length === 0) {
-      all = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive);
     }
 
     // Filter by search
@@ -342,12 +275,14 @@ export class ProductRepository {
       slug: data.slug || (data.name ? data.name.toLowerCase().replace(/\s+/g, "-") : id),
       sku: data.sku ?? `SKU-${Date.now().toString().slice(-4)}`,
       barcode: data.barcode ?? `${Date.now()}`.slice(-12),
-      description: data.description,
-      categoryId: data.categoryId,
-      categoryName: data.categoryName,
-      brandId: data.brandId,
-      brandName: data.brandName,
-      images: data.images ?? (data.images ? [data.images[0]] : []),
+      description: data.description ?? "",
+      categoryId: data.categoryId ?? "",
+      categoryName: data.categoryName ?? "",
+      brandId: data.brandId ?? "",
+      brandName: data.brandName ?? "",
+      images: data.images ?? (data.image?.url ? [data.image.url] : []),
+      image: data.image,
+      thumbnail: data.thumbnail,
       costPrice: Number(data.costPrice ?? 0),
       sellingPrice: Number(data.sellingPrice ?? 0),
       taxRate: Number(data.taxRate ?? 0),
@@ -361,12 +296,14 @@ export class ProductRepository {
       updatedAt: now,
     };
 
-    setLocalDoc(tenantId, "products", id, newProduct);
+    // Canonical Firestore Write — must succeed
+    await docRef.set(newProduct);
 
+    // Sync to local JSON store as non-blocking background cache for offline POS
     try {
-      await docRef.set(newProduct);
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore create deferred:", dbErr);
+      setLocalDoc(tenantId, "products", id, newProduct);
+    } catch {
+      // ignore cache sync error
     }
 
     return newProduct;
@@ -390,34 +327,28 @@ export class ProductRepository {
       }
     }
 
-    // Clean up obsolete image objects if replaced with a new versioned image
-    if (data.image?.path && existing.image?.path && data.image.path !== existing.image.path) {
-      try {
-        await adminStorage.file(existing.image.path).delete();
-      } catch {
-        // ignore missing object errors
-      }
-      if (existing.thumbnail?.path && data.thumbnail?.path !== existing.thumbnail.path) {
-        try {
-          await adminStorage.file(existing.thumbnail.path).delete();
-        } catch {
-          // ignore missing object errors
-        }
-      }
-    }
-
     const updated: IProduct = {
       ...existing,
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    setLocalDoc(tenantId, "products", id, updated);
+    // Canonical Firestore Write — must succeed
+    await this.getCollection(tenantId).doc(id).set(updated, { merge: true });
 
+    // Clean up obsolete image files ONLY AFTER Firestore update succeeds
+    if (data.image?.path && existing.image?.path && data.image.path !== existing.image.path) {
+      deleteFromCloudStorage(existing.image.path).catch(() => {});
+      if (existing.thumbnail?.path && data.thumbnail?.path !== existing.thumbnail.path) {
+        deleteFromCloudStorage(existing.thumbnail.path).catch(() => {});
+      }
+    }
+
+    // Sync to local store cache
     try {
-      await this.getCollection(tenantId).doc(id).set(updated, { merge: true });
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore update deferred:", dbErr);
+      setLocalDoc(tenantId, "products", id, updated);
+    } catch {
+      // ignore cache sync error
     }
 
     return updated;
@@ -438,37 +369,28 @@ export class ProductRepository {
       updatedAt: new Date().toISOString(),
     };
 
-    setLocalDoc(tenantId, "products", id, updated);
+    await this.getCollection(tenantId).doc(id).update({
+      stock: FieldValue.increment(quantity),
+      updatedAt: new Date().toISOString(),
+    });
 
     try {
-      await this.getCollection(tenantId).doc(id).update({
-        stock: FieldValue.increment(quantity),
-        updatedAt: new Date().toISOString(),
-      });
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore updateStock deferred:", dbErr);
+      setLocalDoc(tenantId, "products", id, updated);
+    } catch {
+      // ignore cache sync error
     }
 
     return updated;
   }
 
   async lowStock(threshold = 5, tenantId = "default"): Promise<IProduct[]> {
-    let results: IProduct[] = [];
-    try {
-      const snap = await this.getCollection(tenantId).where("isActive", "==", true).get();
-      for (const doc of snap.docs) {
-        const p = this.mapDoc(doc);
-        if (p && p.stock <= (p.lowStockThreshold ?? threshold)) {
-          results.push(p);
-        }
+    const results: IProduct[] = [];
+    const snap = await this.getCollection(tenantId).where("isActive", "==", true).get();
+    for (const doc of snap.docs) {
+      const p = this.mapDoc(doc);
+      if (p && p.stock <= (p.lowStockThreshold ?? threshold)) {
+        results.push(p);
       }
-    } catch (dbErr) {
-      console.warn("[ProductRepo] Firestore lowStock deferred:", dbErr);
-    }
-
-    if (results.length === 0) {
-      const localProducts = readLocalCollection<IProduct>(tenantId, "products").filter((p) => p.isActive);
-      results = localProducts.filter((p) => p.stock <= (p.lowStockThreshold ?? threshold));
     }
 
     return results;

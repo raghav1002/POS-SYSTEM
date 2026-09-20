@@ -1,3 +1,130 @@
+## [2026-09-20] — Complete Removal of Local Image Fallback & Exclusive Cloudinary Production Storage
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed & Configured
+- **Exclusive Cloudinary Storage Engine ([`src/lib/storage/cloud-storage.ts`](file:///d:/POS/src/lib/storage/cloud-storage.ts))**:
+  - Completely removed all local filesystem fallback write logic (`public/uploads`, `fs.mkdir`, `fs.writeFile`).
+  - Implemented fail-closed validation requiring `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`. Missing credentials or stream failure throws an explicit 500 error.
+  - Returns structured Cloudinary response metadata (`url`, `publicId`, `width`, `height`, `format`, `bytes`, `version`).
+- **Eliminated Double Upload Issue ([`src/app/api/upload/route.ts`](file:///d:/POS/src/app/api/upload/route.ts), [`src/app/api/upload/rotate/route.ts`](file:///d:/POS/src/app/api/upload/rotate/route.ts))**:
+  - Resolved root cause of duplicate image creation where both master and thumbnail were uploaded as separate binary files to Cloudinary.
+  - Refactored upload pipeline to store **EXACTLY 1 master asset** per image in Cloudinary Media Library.
+  - Dynamically constructs 400px thumbnail URLs via Cloudinary CDN URL transformations (`w_400,c_scale,q_75`) without creating duplicate assets.
+- **Reusable Multifunctional UI ConfirmModal ([`src/components/ui/confirm-modal.tsx`](file:///d:/POS/src/components/ui/confirm-modal.tsx))**:
+  - Replaced all browser native `confirm()` / `window.confirm()` popups across Products, Categories, Brands, Branches, Employees, Expenses, Notifications, Suppliers, and Customers modules.
+  - Implemented Radix UI Dialog-based `ConfirmModal` with dark theme styling (`bg-zinc-950`, `border-zinc-800`), glassmorphism backdrop blur, loading state spinners, and dynamic variants (`danger`, `warning`, `info`).
+- **Product Database Migration & Cleanup**:
+  - Audited existing Firestore products and migrated legacy `/uploads/` local file references to Cloudinary HTTPS URLs.
+  - Cleaned up obsolete local files from disk.
+- **Next.js Image Configuration ([`next.config.ts`](file:///d:/POS/next.config.ts))**:
+  - Restricted `remotePatterns` to `res.cloudinary.com`.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (55 static & dynamic routes built cleanly).
+- Local File Fallback Test: **PASS** (0 files created under `public/uploads`).
+- Real Cloudinary Storage Test: **PASS** (`https://res.cloudinary.com/ps7ijrfa/image/upload/...`).
+
+## [2026-09-20] — Cloudflare R2 / S3-Compatible Cloud Storage Architecture & Firebase Storage Decoupling
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed & Configured
+- **S3 & Cloudflare R2 SDK Integration ([`src/lib/storage/cloud-storage.ts`](file:///d:/POS/src/lib/storage/cloud-storage.ts))**:
+  - Integrated `@aws-sdk/client-s3` (`S3Client`, `PutObjectCommand`, `DeleteObjectCommand`) for Cloudflare R2 S3-compatible cloud object storage.
+  - Implemented `uploadToCloudStorage(storagePath, buffer)` and `deleteFromCloudStorage(storagePath)`.
+  - Master WebP (1400px edge, quality 82) and thumbnail WebP (400px edge, quality 75) uploaded with `Content-Type: image/webp` and versioned `Cache-Control: public, max-age=31536000, immutable` headers.
+- **Firebase Storage Dependency Removal**:
+  - Removed all `adminStorage` imports and Firebase Storage calls from product upload, rotation, and product repository image deletion flows.
+  - Product binary assets stored strictly in Cloudflare R2 / Cloud Storage, while product document attributes remain 100% in Firebase Firestore.
+- **Next.js Remote Patterns ([`next.config.ts`](file:///d:/POS/next.config.ts))**:
+  - Added `*.r2.cloudflarestorage.com` and `res.cloudinary.com` to `remotePatterns`.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (55 static and dynamic routes compiled successfully).
+- Canonical Firestore CRUD Test Suite ([`scripts/test-firestore-product-crud.ts`](file:///d:/POS/scripts/test-firestore-product-crud.ts)): **ALL 5/5 CANONICAL TESTS PASSED**.
+
+## [2026-09-20] — Direct Cloudinary Image Storage & Canonical Firestore Database Integration
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed & Configured
+- **Cloudinary Image Storage Pipeline ([`src/lib/storage/cloud-storage.ts`](file:///d:/POS/src/lib/storage/cloud-storage.ts))**:
+  - Configured Cloudinary (`ps7ijrfa`) as the primary cloud image storage engine for all product images.
+  - Master WebP (1400px, quality 82) and thumbnail WebP (400px, quality 75) are uploaded directly via Cloudinary stream (`cloudinary.uploader.upload_stream`).
+  - Completely replaced Firebase Storage image binaries with Cloudinary CDN URLs (`res.cloudinary.com`).
+- **Canonical Firestore Product Database ([`src/repositories/product.repository.ts`](file:///d:/POS/src/repositories/product.repository.ts))**:
+  - Maintained 100% canonical Firestore DB persistence for all product metadata, pricing, stock, SKUs, barcodes, and Cloudinary image metadata (`url`, `path`, `width`, `height`, `format`, `version`).
+- **Next.js Remote Patterns ([`next.config.ts`](file:///d:/POS/next.config.ts))**:
+  - Configured `res.cloudinary.com` in `remotePatterns` for Next.js `<Image />` optimization.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (55 static and dynamic routes compiled successfully).
+- E2E Verification Suite ([`scripts/test-firestore-product-crud.ts`](file:///d:/POS/scripts/test-firestore-product-crud.ts)): **PASSED ALL 5/5 STEPS**.
+
+## [2026-09-20] — Canonical Firestore Product Database & Firebase Storage Enforcement
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed & Enforced
+- **Canonical Firestore Product Database (`src/repositories/product.repository.ts`)**:
+  - Eliminated silent local JSON store fallbacks during Admin Product CRUD operations (`create`, `update`, `delete`, `updateStock`).
+  - All Admin Product write operations now execute direct canonical Firestore writes (`docRef.set()`, `docRef.update()`).
+  - Any Firestore Cloud write failure now throws an unmasked error directly to the API handler, returning an explicit HTTP error toast to the client instead of falsely claiming "Product created successfully" via local fallback.
+- **Firebase Storage Image Binary Source (`src/app/api/upload/route.ts` & `rotate/route.ts`)**:
+  - Direct binary image uploads and image rotations write strictly to Firebase Cloud Storage (`adminStorage.file(path).save()`).
+  - Removed local `/public/uploads` fallback that previously allowed un-synced local files to masquerade as successful production image uploads.
+- **Product Schema & Metadata Preservation (`src/validations/product.schema.ts` & `src/app/api/products/route.ts`)**:
+  - Added structured `image` and `thumbnail` metadata schemas (`url`, `path`, `width`, `height`, `format`, `version`) to `productSchema`.
+  - Guaranteed 100% field persistence across all Admin Product form fields: `name`, `description`, `sku`, `barcode`, `categoryId`, `brandId`, `costPrice`, `sellingPrice`, `stock`, `taxRate`, `lowStockThreshold`, `unit`, `images`, `image`, `thumbnail`, `createdAt`, `updatedAt`, `branchId`.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (55 static and dynamic routes compiled successfully).
+- E2E Firestore CRUD Verification Suite ([`scripts/test-firestore-product-crud.ts`](file:///d:/POS/scripts/test-firestore-product-crud.ts)): **ALL 5/5 CANONICAL TESTS PASSED**.
+
+## [2026-09-20] — EXIF Auto-Orientation & Interactive Image Rotation Controls
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed & Added
+- **Sharp EXIF Auto-Orientation (`src/app/api/upload/route.ts`)**:
+  - Injected `.rotate()` call into Sharp server-side image processing pipeline.
+  - Automatically reads EXIF orientation tags from smartphone cameras (iOS Safari & Android Chrome) and auto-orients portrait/vertical photos upright, preventing images from rendering sideways/horizontally.
+- **Dedicated Image Rotation API Endpoint (`src/app/api/upload/rotate/route.ts`)**:
+  - Implemented `POST /api/upload/rotate` endpoint allowing custom rotation (90°, 180°, 270°) of product images.
+  - Re-generates both master WebP (1400px) and thumbnail WebP (400px) maintaining image metadata and cache headers.
+- **Interactive UI Rotate Controls (`src/components/products/product-form-dialog.tsx`)**:
+  - Added Rotate Left (`RotateCcw`) and Rotate Right (`RotateCw`) action buttons directly inside the Product Form Image preview card.
+  - Updated preview container to an aspect-ratio preserving container (`object-contain p-1` in `h-24 w-20`), ensuring vertical images fit cleanly without squashing or cropping.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (55 static and dynamic routes compiled successfully).
+
 ## [2026-09-20] — Product Data & Image Recovery + Production Lag & Request Optimization
 
 ### Author

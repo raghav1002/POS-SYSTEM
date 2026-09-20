@@ -1,9 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ProductRepository } from "../src/repositories/product.repository";
 import fs from "fs";
 import path from "path";
 
+// Load .env.local
+try {
+  const envContent = fs.readFileSync(path.join(process.cwd(), ".env.local"), "utf8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+      const idx = trimmed.indexOf("=");
+      const key = trimmed.slice(0, idx).trim();
+      let val = trimmed.slice(idx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      val = val.replace(/\\n/g, "\n");
+      process.env[key] = val;
+    }
+  }
+} catch (e) {
+  console.error("Failed to load .env.local", e);
+}
+
 async function auditProductImages() {
+  const { ProductRepository } = await import("../src/repositories/product.repository");
   console.log("=== Auditing Firestore Product Images (Read Only) ===");
   const repo = new ProductRepository();
   const tenantId = "default";

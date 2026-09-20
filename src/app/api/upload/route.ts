@@ -1,45 +1,10 @@
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { requireAuth } from "@/lib/auth-helpers";
-import { adminStorage } from "@/lib/firebase/admin";
+import { uploadToCloudStorage } from "@/lib/storage/cloud-storage";
 import sharp from "sharp";
 import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
 
 export const runtime = "nodejs";
-
-async function saveFileWithFallback(
-  storagePath: string,
-  buffer: Buffer,
-  bucketName: string
-): Promise<string> {
-  try {
-    const file = adminStorage.file(storagePath);
-    await file.save(buffer, {
-      metadata: {
-        contentType: "image/webp",
-        cacheControl: "public, max-age=31536000, immutable",
-      },
-    });
-    try {
-      await file.makePublic();
-    } catch {
-      // uniform bucket access fallback
-    }
-    return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(storagePath)}?alt=media`;
-  } catch (err) {
-    console.warn(`[Firebase Storage Deferred]: ${err instanceof Error ? err.message : "Bucket offline"}. Writing to local public uploads...`);
-    
-    // Fallback: Store locally in public/uploads/
-    const localDir = path.join(process.cwd(), "public", "uploads", path.dirname(storagePath));
-    await fs.mkdir(localDir, { recursive: true });
-    
-    const localFilePath = path.join(process.cwd(), "public", "uploads", storagePath);
-    await fs.writeFile(localFilePath, buffer);
-    
-    return `/uploads/${storagePath}`;
-  }
-}
 
 export async function POST(req: Request) {
   try {
@@ -78,10 +43,19 @@ export async function POST(req: Request) {
     const tenantId = session.user.tenantId || "default";
     const productId = productIdInput || `prod_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
     const version = Date.now();
-    const bucketName = adminStorage.name || `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`;
+    const rotationDegrees = Number(formData.get("rotation") || 0);
+
+    // Helper to construct Sharp instance with auto EXIF rotation + optional manual rotation
+    const createSharpPipeline = (buffer: Buffer) => {
+      let instance = sharp(buffer).rotate(); // Auto-rotate according to EXIF metadata tag
+      if ([90, 180, 270].includes(rotationDegrees)) {
+        instance = instance.rotate(rotationDegrees);
+      }
+      return instance;
+    };
 
     // 3. Process Master WebP (Max edge 1400px, quality 82)
-    const masterBuffer = await sharp(inputBuffer)
+    const masterBuffer = await createSharpPipeline(inputBuffer)
       .resize(1400, 1400, {
         fit: "inside",
         withoutEnlargement: true,
@@ -89,46 +63,47 @@ export async function POST(req: Request) {
       .webp({ quality: 82 })
       .toBuffer();
 
-    const masterMeta = await sharp(masterBuffer).metadata();
-    const masterPath = `tenants/${tenantId}/products/${productId}/image-v${version}.webp`;
-    const masterUrl = await saveFileWithFallback(masterPath, masterBuffer, bucketName);
+    const masterPath = `products/${tenantId}/${productId}/image-v${version}.webp`;
+    
+    // 4. Single Cloudinary upload to avoid duplicate asset creation in Media Library
+    const masterResult = await uploadToCloudStorage(masterPath, masterBuffer);
 
-    // 4. Process Thumbnail WebP (Max edge 400px, quality 80)
-    const thumbBuffer = await sharp(inputBuffer)
-      .resize(400, 400, {
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .webp({ quality: 80 })
-      .toBuffer();
+    // 5. Construct Cloudinary dynamic thumbnail URL (400px scaled via Cloudinary CDN transformation)
+    const thumbUrl = masterResult.url.includes("/image/upload/")
+      ? masterResult.url.replace("/image/upload/", "/image/upload/w_400,c_scale,q_75/")
+      : masterResult.url;
 
-    const thumbMeta = await sharp(thumbBuffer).metadata();
-    const thumbPath = `tenants/${tenantId}/products/${productId}/thumb-v${version}.webp`;
-    const thumbUrl = await saveFileWithFallback(thumbPath, thumbBuffer, bucketName);
+    const nowIso = new Date().toISOString();
 
     const imageData = {
       image: {
-        url: masterUrl,
+        url: masterResult.url,
+        publicId: masterResult.publicId,
         path: masterPath,
-        width: masterMeta.width ?? 0,
-        height: masterMeta.height ?? 0,
-        format: "webp" as const,
-        version,
+        width: masterResult.width,
+        height: masterResult.height,
+        format: masterResult.format,
+        bytes: masterResult.bytes,
+        version: masterResult.version,
+        updatedAt: nowIso,
       },
       thumbnail: {
         url: thumbUrl,
-        path: thumbPath,
-        width: thumbMeta.width ?? 0,
-        height: thumbMeta.height ?? 0,
-        format: "webp" as const,
-        version,
+        publicId: masterResult.publicId,
+        path: masterPath,
+        width: Math.min(400, masterResult.width),
+        height: Math.round((Math.min(400, masterResult.width) / (masterResult.width || 1)) * (masterResult.height || 1)),
+        format: masterResult.format,
+        bytes: masterResult.bytes,
+        version: masterResult.version,
+        updatedAt: nowIso,
       },
-      url: masterUrl, // Backward compatibility for single string image field
+      url: masterResult.url, // Primary canonical Cloudinary URL
     };
 
-    return apiSuccess(imageData, "Image optimized and uploaded successfully");
+    return apiSuccess(imageData, "Image optimized and uploaded to Cloudinary successfully");
   } catch (e) {
     console.error("[Upload Processing Error]:", e);
-    return apiError(e instanceof Error ? e.message : "Image processing failed", 500);
+    return apiError(e instanceof Error ? e.message : "Image upload failed", 500);
   }
 }

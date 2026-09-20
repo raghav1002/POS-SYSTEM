@@ -7,11 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export function BrandsPage() {
   const [brands, setBrands] = useState<BrandRecord[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<BrandRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [brandToDelete, setBrandToDelete] = useState<BrandRecord | null>(null);
 
   const loadBrands = useCallback(async () => {
     setIsLoading(true);
@@ -40,14 +45,19 @@ export function BrandsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (brand: BrandRecord) => {
-    const confirmed = window.confirm(`Delete brand "${brand.name}"? This cannot be undone.`);
-    if (!confirmed) return;
-    const res = await fetch(`/api/brands/${brand._id}`, { method: "DELETE" });
+  const handlePromptDelete = (brand: BrandRecord) => {
+    setBrandToDelete(brand);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!brandToDelete) return;
+    const res = await fetch(`/api/brands/${brandToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
-      setBrands((current) => current.filter((item) => item._id !== brand._id));
+      setBrands((current) => current.filter((item) => item._id !== brandToDelete._id));
     }
+    setBrandToDelete(null);
   };
 
   return (
@@ -92,7 +102,7 @@ export function BrandsPage() {
                         <Button type="button" variant="outline" size="sm" className="h-8 w-8 p-0 border-zinc-800 text-zinc-300 hover:bg-zinc-800" onClick={() => openEdit(brand)} aria-label="Edit brand">
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        <Button type="button" variant="destructive" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(brand)} aria-label="Delete brand">
+                        <Button type="button" variant="destructive" size="sm" className="h-8 w-8 p-0" onClick={() => handlePromptDelete(brand)} aria-label="Delete brand">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -122,7 +132,7 @@ export function BrandsPage() {
                     <Edit3 className="mr-1.5 h-3.5 w-3.5" />
                     Edit
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handleDelete(brand)}>
+                  <Button type="button" variant="destructive" size="sm" className="h-8 text-xs" onClick={() => handlePromptDelete(brand)}>
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                     Delete
                   </Button>
@@ -147,6 +157,20 @@ export function BrandsPage() {
         onOpenChange={setDialogOpen}
         brand={selectedBrand}
         onSuccess={loadBrands}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Brand"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{brandToDelete ? `"${brandToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Delete Brand"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

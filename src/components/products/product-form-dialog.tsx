@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Upload, Loader2, Barcode, Sparkles } from "lucide-react";
+import { Upload, Loader2, Barcode, Sparkles, RotateCw, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -58,6 +58,7 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
   const [brands, setBrands] = useState<Brand[]>([]);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [rotating, setRotating] = useState(false);
 
   const isEditing = Boolean(initialData?._id);
 
@@ -164,11 +165,39 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
       setImageUrl(data.url || data.image?.url);
       if (data.image) setImageMeta(data.image);
       if (data.thumbnail) setThumbMeta(data.thumbnail);
-      toast.success("Image optimized (WebP) & uploaded successfully");
+      toast.success("Image auto-oriented (WebP) & uploaded successfully");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRotateImage = async (degrees: 90 | 270) => {
+    if (!imageUrl) return;
+    setRotating(true);
+    try {
+      const res = await fetch("/api/upload/rotate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl,
+          degrees,
+          productId: initialData?._id,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Rotation failed");
+
+      const data = json.data;
+      setImageUrl(data.url || data.image?.url);
+      if (data.image) setImageMeta(data.image);
+      if (data.thumbnail) setThumbMeta(data.thumbnail);
+      toast.success(`Image rotated ${degrees === 90 ? "clockwise" : "counter-clockwise"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Rotation failed");
+    } finally {
+      setRotating(false);
     }
   };
 
@@ -230,31 +259,65 @@ export function ProductFormDialog({ open, onOpenChange, onSuccess, initialData }
             <Label className="text-zinc-200 font-medium">Product Image</Label>
             <div className="flex items-center gap-4">
               {imageUrl ? (
-                <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
-                  <Image src={imageUrl} alt="Preview" fill className="object-cover" unoptimized />
+                <div className="relative h-24 w-20 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 group shrink-0">
+                  <Image src={imageUrl} alt="Preview" fill className="object-contain p-1" unoptimized />
+                  {rotating && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#E85002]" />
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500">
+                <div className="flex h-24 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-900/50 text-zinc-500 shrink-0">
                   <Upload className="h-6 w-6" />
                 </div>
               )}
-              <div className="flex flex-col gap-1.5">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-200 shadow-sm hover:bg-zinc-800 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-[#E85002]" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-200 shadow-sm hover:bg-zinc-800 transition-colors">
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-[#E85002]" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {uploading ? "Uploading to Cloud..." : "Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading || rotating}
+                    />
+                  </label>
+
+                  {imageUrl && (
+                    <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-zinc-300 hover:text-white hover:bg-zinc-800"
+                        onClick={() => handleRotateImage(270)}
+                        disabled={rotating || uploading}
+                        title="Rotate 90° Left (Counter-Clockwise)"
+                      >
+                        <RotateCcw className="h-4 w-4 text-[#E85002]" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-zinc-300 hover:text-white hover:bg-zinc-800"
+                        onClick={() => handleRotateImage(90)}
+                        disabled={rotating || uploading}
+                        title="Rotate 90° Right (Clockwise)"
+                      >
+                        <RotateCw className="h-4 w-4 text-[#E85002]" />
+                      </Button>
+                    </div>
                   )}
-                  {uploading ? "Uploading to Cloud..." : "Upload Image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                  />
-                </label>
-                <p className="text-xs text-zinc-500">PNG, JPG, or WEBP up to 5MB</p>
+                </div>
+                <p className="text-xs text-zinc-500">PNG, JPG, or WEBP (auto-orients portrait photos)</p>
               </div>
             </div>
           </div>

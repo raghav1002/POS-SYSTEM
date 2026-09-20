@@ -14,12 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SupplierRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<SupplierRecord | null>(null);
 
   const load = useCallback(() => {
     setIsLoading(true);
@@ -37,9 +42,14 @@ export default function SuppliersPage() {
     return () => clearTimeout(t);
   }, [load]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deactivate this supplier?")) return;
-    const res = await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
+  const handlePromptDelete = (supplier: SupplierRecord) => {
+    setSupplierToDelete(supplier);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!supplierToDelete) return;
+    const res = await fetch(`/api/suppliers/${supplierToDelete._id}`, { method: "DELETE" });
     const json = await res.json();
     if (json.success) {
       toast.success("Supplier deactivated");
@@ -47,6 +57,7 @@ export default function SuppliersPage() {
     } else {
       toast.error(json.error);
     }
+    setSupplierToDelete(null);
   };
 
   return (
@@ -122,7 +133,7 @@ export default function SuppliersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(s._id)}
+                          onClick={() => handlePromptDelete(s)}
                           aria-label="Deactivate supplier"
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
@@ -175,7 +186,7 @@ export default function SuppliersPage() {
                     variant="destructive"
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => handleDelete(s._id)}
+                    onClick={() => handlePromptDelete(s)}
                   >
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                     Deactivate
@@ -198,6 +209,20 @@ export default function SuppliersPage() {
         onOpenChange={setDialogOpen}
         supplier={editing}
         onSuccess={load}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Deactivate Supplier"
+        description={
+          <span>
+            Are you sure you want to deactivate <strong className="text-zinc-200">{supplierToDelete ? `"${supplierToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Deactivate Supplier"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

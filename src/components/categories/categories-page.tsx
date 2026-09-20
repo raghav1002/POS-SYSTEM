@@ -10,12 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 export function CategoriesPage() {
   const [data, setData] = useState<CategoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryRecord | null>(null);
 
   const load = () => {
     setIsLoading(true);
@@ -57,17 +62,24 @@ export function CategoriesPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (category: CategoryRecord) => {
-    if (!confirm(`Are you sure you want to delete category "${category.name}"?`)) return;
+  const handlePromptDelete = (category: CategoryRecord) => {
+    setCategoryToDelete(category);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
 
     try {
-      const res = await fetch(`/api/categories/${category._id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories/${categoryToDelete._id}`, { method: "DELETE" });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Delete failed");
-      toast.success("Category deleted");
+      toast.success(`Category "${categoryToDelete.name}" deleted successfully`);
       load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete category");
+    } finally {
+      setCategoryToDelete(null);
     }
   };
 
@@ -178,7 +190,7 @@ export function CategoriesPage() {
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40"
-                              onClick={() => handleDelete(cat)}
+                              onClick={() => handlePromptDelete(cat)}
                               title="Delete Category"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -218,7 +230,7 @@ export function CategoriesPage() {
                         size="sm"
                         variant="outline"
                         className="h-8 px-2 text-xs text-red-500"
-                        onClick={() => handleDelete(cat)}
+                        onClick={() => handlePromptDelete(cat)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -236,6 +248,20 @@ export function CategoriesPage() {
         onOpenChange={setDialogOpen}
         onSuccess={load}
         initialData={editingCategory}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Category"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{categoryToDelete ? `"${categoryToDelete.name}"` : ""}</strong>?
+          </span>
+        }
+        confirmText="Delete Category"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

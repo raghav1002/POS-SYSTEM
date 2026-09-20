@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+
 interface Category {
   _id: string;
   name: string;
@@ -27,6 +29,9 @@ export default function AdminProductsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductRecord | null>(null);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<ProductRecord | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -85,17 +90,24 @@ export default function AdminProductsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (product: ProductRecord) => {
-    if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return;
+  const handlePromptDelete = (product: ProductRecord) => {
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
 
     try {
-      const res = await fetch(`/api/products/${product._id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${productToDelete._id}`, { method: "DELETE" });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Delete failed");
-      toast.success("Product deleted successfully");
+      toast.success(`Product "${productToDelete.name}" deleted successfully`);
       load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete product");
+    } finally {
+      setProductToDelete(null);
     }
   };
 
@@ -331,7 +343,7 @@ export default function AdminProductsPage() {
                                 size="sm"
                                 variant="ghost"
                                 className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-950/40"
-                                onClick={() => handleDelete(p)}
+                                onClick={() => handlePromptDelete(p)}
                                 title="Delete Product"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -361,6 +373,20 @@ export default function AdminProductsPage() {
         onOpenChange={setBarcodeModalOpen}
         product={barcodeProduct}
         onSuccess={load}
+      />
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Product"
+        description={
+          <span>
+            Are you sure you want to delete <strong className="text-zinc-200">{productToDelete ? `"${productToDelete.name}"` : ""}</strong>? This will remove/archive the item from your product catalog.
+          </span>
+        }
+        confirmText="Delete Product"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
       />
     </ModulePage>
   );

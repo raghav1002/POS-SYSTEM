@@ -121,6 +121,47 @@ export function Code128Barcode({
 }
 
 /**
+ * Generates raw SVG string for Code128 barcode (used in print windows & exports)
+ */
+export function generateCode128SvgMarkup(
+  value: string,
+  height = 50,
+  barWidth = 1.4,
+  showText = true
+): string {
+  const cleanText = (value || "BARCODE123").trim();
+  const patternList = encodeCode128B(cleanText);
+
+  const rects: { x: number; width: number }[] = [];
+  let currentX = 10;
+
+  patternList.forEach((pattern) => {
+    let isBar = true;
+    for (let i = 0; i < pattern.length; i++) {
+      const width = parseInt(pattern[i], 10) * barWidth;
+      if (isBar) {
+        rects.push({ x: currentX, width });
+      }
+      currentX += width;
+      isBar = !isBar;
+    }
+  });
+
+  const totalWidth = currentX + 10;
+  const barHeight = showText ? height - 16 : height - 4;
+
+  const rectsSvg = rects
+    .map((r) => `<rect x="${r.x}" y="2" width="${r.width}" height="${barHeight}" fill="black" />`)
+    .join("");
+
+  const textSvg = showText
+    ? `<text x="${totalWidth / 2}" y="${height - 2}" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle" fill="black">${cleanText}</text>`
+    : "";
+
+  return `<svg width="${totalWidth}" height="${height}" viewBox="0 0 ${totalWidth} ${height}" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;"><rect width="100%" height="100%" fill="white"/>${rectsSvg}${textSvg}</svg>`;
+}
+
+/**
  * Generate random alphanumeric barcode (e.g. BC-8942-A1)
  */
 export function generateAlphanumericBarcode(prefix = "BC"): string {

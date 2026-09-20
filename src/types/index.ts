@@ -93,3 +93,5 @@ export interface PaginatedResult<T> {
   limit: number;
   totalPages: number;
 }
+
+export type { IProduct } from "@/repositories/product.repository";

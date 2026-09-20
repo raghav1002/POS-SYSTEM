@@ -1,3 +1,35 @@
+## [2026-09-21] — Barcode Designing and Printing Module & Interactive Label Studio (`/barcodes`)
+
+### Author
+- Antigravity AI
+- Machine: PAWAR-PC
+- Environment: Local Development & Next.js Turbopack Production Build Verification
+
+### Added & Features
+- **Fixed Product Catalog Fetching & Auto-Refresh Sync ([`src/components/barcodes/barcode-designer-page.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/barcodes/barcode-designer-page.tsx))**:
+  - Updated API response parsing logic (`json.data.items`) to correctly ingest paginated catalog objects from `/api/products?limit=200` and fallback to `/api/products/public` if needed.
+  - Added a window focus event listener so newly added products automatically appear in the Barcode Designer catalog queue without needing page reloads.
+  - Added a manual **Refresh** button to the top action header.
+
+- **Exact 35.0 × 15.0 cm (4134 × 1772 px @ 300 DPI) Landscape Print Standard ([`src/lib/export-barcodes.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/export-barcodes.ts), [`src/components/barcodes/barcode-editor-modal.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/barcodes/barcode-editor-modal.tsx))**:
+  - Re-engineered PDF exporter and single sticker print CSS to output physical print sizes of **exactly 35.0 cm × 15.0 cm** (350mm × 150mm Landscape) at 300 DPI resolution (4134 × 1772 px).
+  - Scaled top-left badge, top-right logo, vector Code128 barcode, and price tag typography to align with 35cm × 15cm dimensions.
+
+- **Interactive Barcode Label Layout Editor ([`src/components/barcodes/barcode-editor-modal.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/barcodes/barcode-editor-modal.tsx))**:
+  - Built interactive label editor modal rendering the exact requested 4-point sticker layout:
+    - **Top-Left Corner**: Editable text input (defaults to `ON`).
+- **Top-Right Brand Logo Update ([`public/assets/barcode-logo.png`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/public/assets/barcode-logo.png), [`src/lib/export-barcodes.ts`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/export-barcodes.ts))**:
+  - Replaced `public/assets/barcode-logo.png` with the user's newly provided logo image (`ChatGPT Image Jul 15, 2026, 01_39_23 PM (1).png`).
+  - Increased logo display height to match top-left `ON` badge height across live modal preview, table mini stickers, print popups, and PDF exports.
+
+### Fixed
+- **Printed Barcode Graphics Rendering ([`src/lib/barcode-generator.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/lib/barcode-generator.tsx), [`src/components/barcodes/barcode-editor-modal.tsx`](file:///c:/Users/pawar/Downloads/POS-SYSTEM/src/components/barcodes/barcode-editor-modal.tsx))**:
+  - Added `generateCode128SvgMarkup` helper to generate inline vector Code128 barcode SVG markup for single label print windows (`handlePrintSingle`).
+  - Resolved issue where clicking "Print Sticker" previously rendered plain text string `*789913258844*` instead of actual visual barcode lines.
+
+### Verification Results
+- `npx tsc --noEmit`: **PASS** (0 errors).
+
 ## [2026-09-21] — Complete Website Logo Removal & Clean Brand Header Standardization
 
 ### Author

@@ -20,6 +20,7 @@ import {
   Store,
   Shield,
   QrCode,
+  Barcode,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -73,6 +74,7 @@ const navSections: NavSection[] = [
       { href: "/suppliers", label: "Suppliers", icon: Truck, roles: ["admin", "supervisor", "manager"] },
       { href: "/expenses", label: "Expenses", icon: Wallet, roles: ["admin", "supervisor", "manager"] },
       { href: "/payments", label: "Payment Systems", icon: QrCode, roles: ["admin", "supervisor", "manager"] },
+      { href: "/barcodes", label: "Barcode Designer", icon: Barcode, roles: ["admin", "supervisor", "manager"] },
     ],
   },
   {

@@ -1,3 +1,25 @@
+## [2026-09-20] — Mobile Camera Live Video Preview Stream Fix
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Production Build & Real Device Verification
+
+### Fixed
+- **Mobile Camera Black Screen Bug (`src/components/pos/camera-barcode-scanner.tsx`)**:
+  - Resolved root cause conflict where manually requesting `getUserMedia` and calling `@zxing/browser` `decodeFromVideoElement()` simultaneously without waiting for video stream frame readiness caused mobile Chrome & iOS Safari to pause/freeze the video feed.
+  - Added progressive constraint fallback (`facingMode: { ideal: "environment" }` → `{ facingMode: "environment" }` → `{ video: true }`).
+  - Implemented explicit DOM element polling and `loadeddata` event listener ensuring stream is active (`readyState >= 2`) before initiating ZXing decoding loop.
+  - Injected explicit `autoPlay`, `playsInline`, and `muted` props into JSX `<video>` element required by iOS Safari inline video policies.
+  - Handled `NotAllowedError`, `NotReadableError`, `NotFoundError`, and `isSecureContext` with clear user-facing error states.
+- **Unsplash Remote Pattern Configuration (`next.config.ts`)**:
+  - Added `images.unsplash.com` to `remotePatterns` in `next.config.ts`, preventing unconfigured host errors during POS product image rendering.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (54 static & dynamic routes compiled successfully).
+
 ## [2026-09-20] — Real Phone Barcode Engine & E2E Checkout Verification
 
 ### Author

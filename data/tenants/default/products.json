@@ -1,5 +1,26 @@
 [
   {
+    "_id": "IwIpXuYzcvoXpPAQSuEE",
+    "id": "IwIpXuYzcvoXpPAQSuEE",
+    "name": "TEST E2E RETAIL PRODUCT",
+    "slug": "test-e2e-retail-product",
+    "sku": "SKU-POS-7388",
+    "barcode": "8901234327388",
+    "images": [
+      "/public/uploads/test-product.webp"
+    ],
+    "costPrice": 60,
+    "sellingPrice": 100,
+    "taxRate": 0,
+    "stock": 10,
+    "lowStockThreshold": 3,
+    "unit": "pcs",
+    "variants": [],
+    "isActive": true,
+    "createdAt": "2026-09-20T13:18:48.717Z",
+    "updatedAt": "2026-09-20T13:18:48.717Z"
+  },
+  {
     "_id": "xWnBINC7rPKZG46l7ixT",
     "id": "xWnBINC7rPKZG46l7ixT",
     "name": "TEST E2E RETAIL PRODUCT",

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Camera, RefreshCw, AlertTriangle, CheckCircle2, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
+import { DecodeHintType, BarcodeFormat } from "@zxing/library";
 
 interface Props {
   open: boolean;
@@ -14,20 +15,45 @@ interface Props {
   onScan: (barcode: string) => void;
 }
 
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+  } catch {
+    // Audio fallback
+  }
+}
+
 export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const zxingControlsRef = useRef<IScannerControls | null>(null);
-  
+  const animFrameIdRef = useRef<number | null>(null);
+
   const [manualCode, setManualCode] = useState("");
   const [cameraError, setCameraError] = useState("");
   const [scannerStatus, setScannerStatus] = useState<"initializing" | "ready" | "detected" | "error">("initializing");
-  
+  const [isHardwareAccelerated, setIsHardwareAccelerated] = useState(false);
+
   const scanningRef = useRef(false);
   const lastScannedCodeRef = useRef<{ code: string; time: number }>({ code: "", time: 0 });
 
   const stopCamera = useCallback(() => {
     scanningRef.current = false;
+
+    if (animFrameIdRef.current !== null) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
 
     if (zxingControlsRef.current) {
       try {
@@ -58,7 +84,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
       if (!clean) return;
 
       const now = Date.now();
-      // Deduplicate scans emitted across fast video frames within 1500ms
       if (lastScannedCodeRef.current.code === clean && now - lastScannedCodeRef.current.time < 1500) {
         return;
       }
@@ -66,7 +91,15 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
       lastScannedCodeRef.current = { code: clean, time: now };
       scanningRef.current = false;
       setScannerStatus("detected");
-      
+
+      // Audio & Tactile Haptic Feedback
+      playBeep();
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(80);
+        } catch {}
+      }
+
       stopCamera();
       onScan(clean);
       onOpenChange(false);
@@ -79,7 +112,6 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     setCameraError("");
     setScannerStatus("initializing");
 
-    // 1. Secure Context Check (Browsers block camera on plain HTTP LAN IPs)
     if (
       typeof window !== "undefined" &&
       !window.isSecureContext &&
@@ -93,17 +125,23 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
       return;
     }
 
-    // 2. Browser API support check
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setScannerStatus("error");
       setCameraError("Camera API is not supported on this browser.");
       return;
     }
 
-    // 3. Progressive Constraint Fallback Strategy for Mobile Rear Camera
-    const constraintOptions: MediaStreamConstraints[] = [
-      { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
-      { video: { facingMode: { ideal: "environment" } }, audio: false },
+    // High performance video constraints for instant barcode scan
+    const fastConstraints: MediaStreamConstraints[] = [
+      {
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
+        },
+        audio: false,
+      },
       { video: { facingMode: "environment" }, audio: false },
       { video: true, audio: false },
     ];
@@ -111,7 +149,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     let stream: MediaStream | null = null;
     let lastError: unknown = null;
 
-    for (const constraints of constraintOptions) {
+    for (const constraints of fastConstraints) {
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (stream) break;
@@ -123,36 +161,34 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     if (!stream) {
       setScannerStatus("error");
       const errName = lastError instanceof Error ? lastError.name : String(lastError);
-      
       if (errName.includes("NotAllowedError") || errName.includes("PermissionDenied")) {
-        setCameraError("Camera permission denied. Please grant camera access in browser site settings.");
-      } else if (errName.includes("NotReadableError") || errName.includes("TrackStartError")) {
-        setCameraError("Camera is in use by another application. Close other camera apps and retry.");
-      } else if (errName.includes("NotFoundError") || errName.includes("DevicesNotFound")) {
-        setCameraError("No camera device found on this phone.");
+        setCameraError("Camera permission denied. Please grant camera access in site settings.");
       } else {
-        setCameraError("Unable to initialize camera preview. Try entering barcode manually below.");
+        setCameraError("Unable to open camera feed. Enter barcode manually below.");
       }
       return;
     }
 
     streamRef.current = stream;
 
-    // Wait for video element ref to be mounted in DOM
-    let retries = 0;
-    while (!videoRef.current && retries < 20) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      retries++;
-    }
+    // Apply Hardware Continuous Auto-Focus if supported by camera device
+    try {
+      const track = stream.getVideoTracks()[0];
+      if (track && typeof track.getCapabilities === "function") {
+        const caps = (track.getCapabilities() as Record<string, any>) || {};
+        if (caps.focusMode && Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous")) {
+          track.applyConstraints({ advanced: [{ focusMode: "continuous" }] } as any).catch(() => {});
+        }
+      }
+    } catch {}
 
     const videoEl = videoRef.current;
     if (!videoEl) {
-      setCameraError("Video player element error. Please retry.");
+      setCameraError("Video player error.");
       setScannerStatus("error");
       return;
     }
 
-    // Attach stream to HTMLVideoElement with iOS Safari + Android compatibility attributes
     videoEl.srcObject = stream;
     videoEl.setAttribute("playsinline", "true");
     videoEl.setAttribute("autoplay", "true");
@@ -160,28 +196,63 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
 
     try {
       await videoEl.play();
-    } catch {
-      // Play promise exception safety
-    }
-
-    // Wait for video stream to actually start playing frames
-    if (videoEl.readyState < 2) {
-      await new Promise<void>((resolve) => {
-        const handleLoadedData = () => {
-          videoEl.removeEventListener("loadeddata", handleLoadedData);
-          resolve();
-        };
-        videoEl.addEventListener("loadeddata", handleLoadedData);
-        setTimeout(resolve, 500); // safety fallback
-      });
-    }
+    } catch {}
 
     scanningRef.current = true;
     setScannerStatus("ready");
 
-    // Initialize ZXing MultiFormat Decoder over live video element
+    // 1. FAST DRIVER: Check for Hardware-Accelerated Native BarcodeDetector API (Android Chrome / Modern Browsers)
+    if (typeof window !== "undefined" && "BarcodeDetector" in window) {
+      try {
+        setIsHardwareAccelerated(true);
+        const NativeBarcodeDetector = (window as any).BarcodeDetector;
+        const detector = new NativeBarcodeDetector({
+          formats: ["ean_13", "code_128", "upc_a", "upc_e", "code_39", "ean_8", "qr_code"],
+        });
+
+        const scanFrame = async () => {
+          if (!scanningRef.current || !videoRef.current) return;
+
+          try {
+            if (videoRef.current.readyState >= 2) {
+              const detected = await detector.detect(videoRef.current);
+              if (detected && detected.length > 0 && scanningRef.current) {
+                const code = detected[0].rawValue || detected[0].rawValueText;
+                if (code) {
+                  handleDecodedBarcode(code);
+                  return;
+                }
+              }
+            }
+          } catch {}
+
+          if (scanningRef.current) {
+            animFrameIdRef.current = requestAnimationFrame(scanFrame);
+          }
+        };
+
+        animFrameIdRef.current = requestAnimationFrame(scanFrame);
+        return;
+      } catch (nativeErr) {
+        console.warn("[CameraScanner] BarcodeDetector fallback to ZXing:", nativeErr);
+      }
+    }
+
+    // 2. FALLBACK DRIVER: Optimized ZXing Reader constrained exclusively to retail barcodes
     try {
-      const codeReader = new BrowserMultiFormatReader();
+      setIsHardwareAccelerated(false);
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.QR_CODE,
+      ]);
+
+      const codeReader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 80 });
       const controls = await codeReader.decodeFromVideoElement(videoEl, (result) => {
         if (result && scanningRef.current) {
           handleDecodedBarcode(result.getText());
@@ -189,7 +260,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
       });
       zxingControlsRef.current = controls;
     } catch (zxingErr) {
-      console.warn("[CameraScanner] ZXing decoder fallback:", zxingErr);
+      console.warn("[CameraScanner] ZXing decoder error:", zxingErr);
     }
   }, [handleDecodedBarcode]);
 
@@ -214,12 +285,19 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-            <Camera className="h-5 w-5 text-[#E85002]" />
-            Barcode Camera Scanner
+          <DialogTitle className="flex items-center justify-between text-zinc-900 dark:text-zinc-100">
+            <div className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-[#E85002]" />
+              <span>Instant Barcode Camera Scanner</span>
+            </div>
+            {isHardwareAccelerated && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                <Zap className="h-3 w-3" /> Ultra-Fast Hardware GPU
+              </span>
+            )}
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-400">
-            Point phone camera at retail barcode (EAN-13, UPC, Code 128) or enter code manually.
+            Point mobile camera at retail barcode (EAN-13, UPC, Code 128) for instant scan.
           </DialogDescription>
         </DialogHeader>
 
@@ -237,7 +315,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
               }`}
             />
 
-            {/* Visual Laser Scanner Overlay & Reticle */}
+            {/* Visual Reticle & Laser Scanner Line */}
             {(scannerStatus === "ready" || scannerStatus === "detected") && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="relative h-44 w-64 rounded-lg border-2 border-dashed border-[#E85002]/80">
@@ -246,18 +324,18 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
               </div>
             )}
 
-            {/* Status Messages / Loading Skeletons */}
+            {/* Status Messages */}
             {scannerStatus === "initializing" && (
               <div className="p-4 text-center text-zinc-400 space-y-2">
                 <RefreshCw className="mx-auto h-8 w-8 animate-spin text-[#E85002]" />
-                <p className="text-xs font-semibold">Opening phone camera feed...</p>
+                <p className="text-xs font-semibold">Initializing high-speed camera engine...</p>
               </div>
             )}
 
             {scannerStatus === "detected" && (
               <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white space-y-2">
                 <CheckCircle2 className="h-10 w-10 text-emerald-500 animate-bounce" />
-                <p className="text-sm font-bold tracking-wide">Barcode Detected!</p>
+                <p className="text-sm font-bold tracking-wide">Barcode Scanned!</p>
               </div>
             )}
 
@@ -273,7 +351,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
           </div>
 
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-            Center barcode within reticle. Supports EAN-13 (890...), UPC-A, Code 128 & QR labels.
+            Center barcode within reticle. Fast auto-scan for EAN-13, UPC, Code 128 & QR labels.
           </p>
 
           {/* Manual Input Fallback */}
@@ -284,7 +362,7 @@ export function CameraBarcodeScanner({ open, onOpenChange, onScan }: Props) {
               onChange={(e) => setManualCode(e.target.value)}
               className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700 text-sm font-mono"
             />
-            <Button type="submit" variant="brandGradient" className="shrink-0">
+            <Button type="submit" variant="brandGradient" className="shrink-0 font-bold text-xs">
               Submit
             </Button>
           </form>

@@ -7,15 +7,7 @@ import { Store, LogOut, LayoutDashboard, Wifi, WifiOff, User as UserIcon } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission } from "@/lib/permissions";
-import type { UserRole } from "@/types";
-
-interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  tenantId: string;
-}
+import { useSession } from "@/components/providers/session-provider";
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
@@ -23,7 +15,8 @@ interface WorkspaceShellProps {
 
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { data: sessionData } = useSession();
+  const user = sessionData?.user || null;
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
@@ -35,16 +28,6 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
-
-    // Fetch active session user profile
-    fetch("/api/auth/session")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.user) {
-          setUser(json.data.user);
-        }
-      })
-      .catch(() => {});
 
     return () => {
       window.removeEventListener("online", handleOnline);

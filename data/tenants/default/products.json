@@ -7,7 +7,7 @@
     "sku": "SKU-POS-7388",
     "barcode": "8901234327388",
     "images": [
-      "/public/uploads/test-product.webp"
+      "/uploads/test-product.webp"
     ],
     "costPrice": 60,
     "sellingPrice": 100,
@@ -18,7 +18,7 @@
     "variants": [],
     "isActive": true,
     "createdAt": "2026-09-20T13:18:48.717Z",
-    "updatedAt": "2026-09-20T13:18:48.717Z"
+    "updatedAt": "2026-09-20T13:27:14.178Z"
   },
   {
     "_id": "xWnBINC7rPKZG46l7ixT",
@@ -28,7 +28,7 @@
     "sku": "SKU-POS-7863",
     "barcode": "8901234317863",
     "images": [
-      "/public/uploads/test-product.webp"
+      "/uploads/test-product.webp"
     ],
     "costPrice": 60,
     "sellingPrice": 100,
@@ -39,7 +39,7 @@
     "variants": [],
     "isActive": true,
     "createdAt": "2026-09-20T13:01:59.465Z",
-    "updatedAt": "2026-09-20T13:01:59.466Z"
+    "updatedAt": "2026-09-20T13:27:14.318Z"
   },
   {
     "_id": "b1fj0U7Yk06L5aEuLhxP",
@@ -50,7 +50,7 @@
     "barcode": "890909029931",
     "categoryName": "Beverages",
     "images": [
-      "/public/uploads/test-tea.webp"
+      "/uploads/test-tea.webp"
     ],
     "costPrice": 90,
     "sellingPrice": 175,
@@ -61,7 +61,7 @@
     "variants": [],
     "isActive": true,
     "createdAt": "2026-09-20T12:57:11.295Z",
-    "updatedAt": "2026-09-20T12:57:12.252Z",
+    "updatedAt": "2026-09-20T13:27:14.443Z",
     "description": "",
     "categoryId": "",
     "brandId": "",

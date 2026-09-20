@@ -1,3 +1,26 @@
+## [2026-09-20] — Product Data & Image Recovery + Production Lag & Request Optimization
+
+### Author
+- Antigravity AI
+- Machine: JINWOO
+- Environment: Local Development & Production Build Verification
+
+### Fixed
+- **Product Image Recovery & Path Normalization**:
+  - Executed read-only audit (`scripts/audit-product-images.ts`) inspecting all 8 catalog products in Firestore without modifying database structure.
+  - Identified root cause for 3 broken image records (`TEST E2E RETAIL PRODUCT` x2, `Perf Test Organic Tea`): E2E test scripts previously inserted invalid paths containing leading `/public/uploads/...` with missing WebP files.
+  - Generated high-quality 800x800 WebP assets (`public/uploads/test-product.webp` and `public/uploads/test-tea.webp`) using `sharp` and updated Firestore & local store document records to valid relative `/uploads/...` paths.
+  - Preserved 100% of product IDs, names, SKUs, barcodes, selling prices, cost prices, stock levels, and categories across all 8 products.
+- **Duplicate API Request & Latency Elimination**:
+  - Eliminated duplicate `/api/auth/session` network waterfall requests in `WorkspaceShell` (`src/components/layout/workspace-shell.tsx`) by replacing raw `useEffect` fetch calls with `useSession()` context consumption.
+  - Verified local POS cart operations (item additions, quantity increments, quantity decrements, removals, discounts, clear cart) operate purely in-memory via Zustand without triggering catalog refetches.
+
+### Performance & Security
+- `npx tsc --noEmit`: **PASS** (0 errors).
+- `npm run lint`: **PASS** (0 errors, 6 warnings).
+- `npm run build`: **PASS** (54 static and dynamic routes compiled successfully).
+- Read-Only Audit & Recovery Verification (`scripts/audit-product-images.ts`): **8/8 PRODUCTS OK**.
+
 ## [2026-09-20] — Mobile Camera Live Video Preview Stream Fix
 
 ### Author
